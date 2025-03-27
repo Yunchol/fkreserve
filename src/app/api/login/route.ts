@@ -17,5 +17,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "パスワードが間違っています" }, { status: 401 });
   }
 
-  return NextResponse.json({ message: "ログイン成功" });
+  return NextResponse.json({
+    message: "ログイン成功",
+    role: user.role,
+  });
+  
 }

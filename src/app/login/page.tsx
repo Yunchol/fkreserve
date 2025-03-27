@@ -15,8 +15,20 @@ export default function LoginPage() {
       headers: { "Content-Type": "application/json" },
     });
 
+    const data = await res.json();
+
     if (res.ok) {
-      router.push("/dashboard");
+      const role = data.role;
+  
+      if (role === "admin") {
+        router.push("/admin/admin-dashboard");
+      } else if (role === "staff") {
+        router.push("/staff/staff-dashboard");
+      } else if (role === "parent") {
+        router.push("/parent/parent-dashboard");
+      } else if (role === "pending") {
+        router.push("/pending");
+      }
     } else {
       alert("ログイン失敗！");
     }

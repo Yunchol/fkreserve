@@ -15,18 +15,22 @@ datasource db {
 
 model User {
   id       String   @id @default(cuid())
+  name     String
   email    String   @unique
   password String
-  name     String
-  posts    Post[]   // ← 投稿とのリレーション（1対多）
+  role     String   @default("pending") // "pending" 初期値
+  children Child[]
 }
 
-model Post {
+model Child {
   id        String   @id @default(cuid())
-  title     String
-  content   String
-  imageUrl  String?  // 画像URL（あってもなくてもOK）
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
+  name      String
+  birthDate DateTime
+  gender    String
+  school    String
+  address   String?           // 任意：住所
+  notes     String?           // 任意：特記事項やメモ
+  allergy   String?           // 任意：アレルギー情報
+  parentId  String
+  parent    User     @relation(fields: [parentId], references: [id])
 }
