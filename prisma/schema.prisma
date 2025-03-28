@@ -14,24 +14,24 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  name     String
-  email    String   @unique
-  password String
-  role     String   @default("pending") // "pending" 初期値
-  children Child[]
-  createdAt DateTime @default(now()) 
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  password          String
+  role              String   @default("pending")
+  profileCompleted  Boolean  @default(false) // ✅ プロフィール完了フラグ
+  children          Child[]  // ✅ 子どもとのリレーション
+  createdAt         DateTime @default(now())
 }
 
 model Child {
-  id        String   @id @default(cuid())
-  name      String
-  birthDate DateTime
-  gender    String
-  school    String
-  address   String?           // 任意：住所
-  notes     String?           // 任意：特記事項やメモ
-  allergy   String?           // 任意：アレルギー情報
-  parentId  String
-  parent    User     @relation(fields: [parentId], references: [id])
+  id         String   @id @default(cuid())
+  name       String
+  birthday   DateTime
+  gender     String
+  notes      String?         // アレルギーや特記事項など（任意）
+  parent     User     @relation(fields: [parentId], references: [id])
+  parentId   String             // 外部キー（保護者ID）
+  createdAt  DateTime @default(now())
 }
+

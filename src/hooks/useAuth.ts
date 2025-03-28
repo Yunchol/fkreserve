@@ -28,6 +28,16 @@ export function useAuth(allowedRoles?: ("admin" | "parent" | "staff" | "pending"
         const data = await res.json();
         const user = data.user;
 
+         // ✅ profileCompletedチェック（保護者で未完了ならsetupに飛ばす）
+         if (
+          user.role === "parent" &&
+          !user.profileCompleted &&
+          !window.location.pathname.includes("/parent/setup")
+        ) {
+          router.push("/parent/setup");
+          return;
+        }
+
         if (allowedRoles && !allowedRoles.includes(user.role)) {
           router.push("/login");
           return;
