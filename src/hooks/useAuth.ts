@@ -1,3 +1,5 @@
+//認証ガード
+
 "use client";
 
 import { useEffect, useState } from "react";

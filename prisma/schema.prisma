@@ -20,6 +20,7 @@ model User {
   password String
   role     String   @default("pending") // "pending" 初期値
   children Child[]
+  createdAt DateTime @default(now()) 
 }
 
 model Child {
