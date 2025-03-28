@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/stores/userStore"; // ✅ Zustand storeを読み込む
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const setUser = useUserStore((state) => state.setUser); // ✅ ZustandのsetUserを取得
 
   const handleLogin = async () => {
     const res = await fetch("/api/login", {
@@ -18,8 +20,10 @@ export default function LoginPage() {
     const data = await res.json();
 
     if (res.ok) {
-      const role = data.role;
-  
+      setUser(data.user); // ✅ ここでZustandにuser保存！
+
+      const role = data.user.role;
+
       if (role === "admin") {
         router.push("/admin/admin-dashboard");
       } else if (role === "staff") {

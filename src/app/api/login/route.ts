@@ -35,8 +35,15 @@ export async function POST(req: Request) {
     maxAge: 60 * 60 * 24 * 7, // 1週間
   });
 
-  return NextResponse.json({
-    message: "ログイン成功",
+  
+return NextResponse.json({
+  message: "ログイン成功",
+  user: {
+    id: user.id,
+    name: user.name,
+    email: user.email,
     role: user.role,
-  });
+  },
+});
+
 }
