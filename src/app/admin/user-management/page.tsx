@@ -13,9 +13,37 @@ type User = {
   createdAt: string;
 };
 
+const getRoleStyle = (role: string) => {
+  switch (role) {
+    case "admin":
+      return "bg-red-100 text-red-800 px-2 py-1 rounded";
+    case "parent":
+      return "bg-blue-100 text-blue-800 px-2 py-1 rounded";
+    case "staff":
+      return "bg-green-100 text-green-800 px-2 py-1 rounded";
+    case "pending":
+      return "bg-gray-100 text-gray-800 px-2 py-1 rounded";
+    default:
+      return "";
+  }
+};
+
+const roleLabels: { [key: string]: string } = {
+  admin: "👑 管理者",
+  parent: "👪 保護者",
+  staff: "🧑‍🏫 スタッフ",
+  pending: "⏳ 承認待ち",
+};
+
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedRoles, setExpandedRoles] = useState<{ [key: string]: boolean }>({
+    admin: true,
+    parent: true,
+    staff: true,
+    pending: true,
+  });
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -34,8 +62,21 @@ export default function UserManagementPage() {
     fetchUsers();
   }, []);
 
+  const toggleRole = (role: string) => {
+    setExpandedRoles((prev) => ({
+      ...prev,
+      [role]: !prev[role],
+    }));
+  };
+
+  const groupedUsers: { [key: string]: User[] } = users.reduce((acc, user) => {
+    if (!acc[user.role]) acc[user.role] = [];
+    acc[user.role].push(user);
+    return acc;
+  }, {} as { [key: string]: User[] });
+
   return (
-    <div className="p-4 max-w-5xl mx-auto space-y-4">
+    <div className="p-4 max-w-5xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold mb-4">ユーザー管理</h1>
 
       {loading ? (
@@ -45,17 +86,36 @@ export default function UserManagementPage() {
           ))}
         </div>
       ) : (
-        users.map((u) => (
-          <Card key={u.id}>
-            <CardHeader>
-              <CardTitle>{u.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-1">
-              <p><strong>メール：</strong>{u.email}</p>
-              <p><strong>ロール：</strong>{u.role}</p>
-              <p><strong>登録日：</strong>{format(new Date(u.createdAt), "yyyy/MM/dd")}</p>
-            </CardContent>
-          </Card>
+        Object.entries(roleLabels).map(([role, label]) => (
+          <div key={role}>
+            <button
+              onClick={() => toggleRole(role)}
+              className="text-lg font-bold mb-2 w-full text-left"
+            >
+              {label}（{groupedUsers[role]?.length ?? 0}人）{" "}
+              <span>{expandedRoles[role] ? "▲" : "▼"}</span>
+            </button>
+
+            {expandedRoles[role] && (
+              <div className="space-y-4">
+                {(groupedUsers[role] ?? []).map((u) => (
+                  <Card key={u.id}>
+                    <CardHeader>
+                      <CardTitle>{u.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm space-y-1">
+                      <p><strong>メール：</strong>{u.email}</p>
+                      <p>
+                        <strong>ロール：</strong>
+                        <span className={getRoleStyle(u.role)}>{u.role}</span>
+                      </p>
+                      <p><strong>登録日：</strong>{format(new Date(u.createdAt), "yyyy/MM/dd")}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         ))
       )}
     </div>
