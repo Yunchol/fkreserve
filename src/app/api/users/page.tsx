@@ -1,12 +1,8 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { User } from "@/types/user";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-};
 
 export default function UserListPage() {
   const [users, setUsers] = useState<User[]>([]);
