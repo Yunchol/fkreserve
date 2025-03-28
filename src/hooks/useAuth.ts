@@ -4,24 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "parent" | "staff" | "pending";
-};
-
-export function useAuth(allowedRoles?: User["role"][]) {
-  const setUser = useUserStore((state) => state.setUser);
+export function useAuth(allowedRoles?: ("admin" | "parent" | "staff" | "pending")[]) {
+  const { setUser, clearUser, setChecked, checked } = useUserStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (checked) {
+      setLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         const res = await fetch("/api/me");
         if (!res.ok) {
-          router.push("/login");
+          clearUser();
           return;
         }
 
@@ -33,16 +31,17 @@ export function useAuth(allowedRoles?: User["role"][]) {
           return;
         }
 
-        setUser(user); // ZustandにUser情報を状態保存
+        setUser(user);
       } catch {
-        router.push("/login");
+        clearUser();
       } finally {
+        setChecked(true);
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [router, allowedRoles, setUser]);
+  }, [router, allowedRoles, checked, setUser, clearUser, setChecked]);
 
   return { loading };
 }
