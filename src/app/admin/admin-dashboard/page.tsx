@@ -9,7 +9,11 @@ export default function AdminDashboard() {
   const { user } = useUserStore();
 
   if (loading) return <p>読み込み中...</p>;
-  if (!user) return null;
+
+  // ✅ 認可チェック：roleがadminじゃなければ表示しない
+  if (!user || user.role !== "admin") {
+    return null; // ← これで一瞬でも描画されない！
+  }
 
   return (
     <div>
