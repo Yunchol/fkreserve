@@ -1,4 +1,4 @@
-// app/api/admin/users/route.ts
+// ユーザー一覧取得（GET）
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";

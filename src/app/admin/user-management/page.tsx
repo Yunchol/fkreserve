@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type User = {
   id: string;
@@ -32,31 +34,30 @@ export default function UserManagementPage() {
     fetchUsers();
   }, []);
 
-  if (loading) return <p>読み込み中...</p>;
-
   return (
-    <div>
-      <h1>ユーザー管理</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>名前</th>
-            <th>メール</th>
-            <th>ロール</th>
-            <th>登録日</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id}>
-              <td>{u.name}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>{format(new Date(u.createdAt), "yyyy/MM/dd")}</td>
-            </tr>
+    <div className="p-4 max-w-5xl mx-auto space-y-4">
+      <h1 className="text-2xl font-semibold mb-4">ユーザー管理</h1>
+
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full" />
           ))}
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        users.map((u) => (
+          <Card key={u.id}>
+            <CardHeader>
+              <CardTitle>{u.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              <p><strong>メール：</strong>{u.email}</p>
+              <p><strong>ロール：</strong>{u.role}</p>
+              <p><strong>登録日：</strong>{format(new Date(u.createdAt), "yyyy/MM/dd")}</p>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

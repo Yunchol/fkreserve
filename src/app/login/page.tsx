@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/userStore"; // ✅ Zustand storeを読み込む
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -39,21 +43,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      <h1>ログイン</h1>
-      <input
-        type="text"
-        placeholder="メールアドレス"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="パスワード"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleLogin}>ログイン</button>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">ログイン</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            type="email"
+            placeholder="メールアドレス"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            type="password"
+            placeholder="パスワード"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Button className="w-full" onClick={handleLogin}>
+            ログイン
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
