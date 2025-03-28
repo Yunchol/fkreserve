@@ -2,43 +2,55 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "@/stores/userStore"; // ✅ Zustand storeを読み込む
+import { useUserStore } from "@/stores/userStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const setUser = useUserStore((state) => state.setUser); // ✅ ZustandのsetUserを取得
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleLogin = async () => {
+    // ✅ 認証API叩く
     const res = await fetch("/api/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
       headers: { "Content-Type": "application/json" },
     });
 
-    const data = await res.json();
+    if (!res.ok) {
+      alert("ログイン失敗！");
+      return;
+    }
 
-    if (res.ok) {
-      setUser(data.user); // ✅ ここでZustandにuser保存！
+    // ✅ ログイン成功 → /api/me で正確なユーザー情報取得
+    const meRes = await fetch("/api/me");
+    const meData = await meRes.json();
+    const user = meData.user;
 
-      const role = data.user.role;
+    if (!user) {
+      alert("ユーザー情報の取得に失敗しました");
+      return;
+    }
 
-      if (role === "admin") {
-        router.push("/admin/admin-dashboard");
-      } else if (role === "staff") {
-        router.push("/staff/staff-dashboard");
-      } else if (role === "parent") {
+    setUser(user); // ✅ Zustandに保存
+
+    // ✅ ロール & profileCompleted に応じて遷移
+    if (user.role === "admin") {
+      router.push("/admin/admin-dashboard");
+    } else if (user.role === "staff") {
+      router.push("/staff/staff-dashboard");
+    } else if (user.role === "parent") {
+      if (!user.profileCompleted) {
+        router.push("/parent/setup");
+      } else {
         router.push("/parent/parent-dashboard");
-      } else if (role === "pending") {
-        router.push("/pending");
       }
     } else {
-      alert("ログイン失敗！");
+      router.push("/pending");
     }
   };
 
