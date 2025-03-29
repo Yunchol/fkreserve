@@ -6,6 +6,7 @@ import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const { loading } = useAuth(["parent"]);
@@ -32,10 +33,15 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         <div className="text-sm md:text-base text-gray-700 font-medium">
           ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
         </div>
+        <Button variant="outline" onClick={() => router.push("/parent/reservations")}>予約管理</Button>
+          <Button variant="outline" onClick={() => router.push("/parent/profile")}>プロフィール管理</Button>
+          <Button variant="outline" onClick={() => router.push("/parent/billing")}>請求確認</Button>
+          <Button variant="outline" onClick={() => router.push("/parent/announcements")}>お知らせ</Button>
         <LogoutButton />
       </header>
 
       <main className="max-w-screen-md mx-auto py-8 px-4">
+
         <Card>
           <CardContent className="py-6">
             {children}
