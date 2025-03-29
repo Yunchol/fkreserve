@@ -1,10 +1,11 @@
-// src/components/ReservationCalendar.tsx
-
 "use client";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction"; // 追加
 import { useEffect, useState } from "react";
+import { CalendarOptions } from "@fullcalendar/core"; 
+import { DateClickArg } from "@fullcalendar/interaction";
 
 type Reservation = {
   id: string;
@@ -15,9 +16,10 @@ type Reservation = {
 
 type Props = {
   reservations: Reservation[];
+  onDateClick?: (dateStr: string) => void;
 };
 
-export default function ReservationCalendar({ reservations }: Props) {
+export default function ReservationCalendar({ reservations, onDateClick }: Props) {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -32,13 +34,18 @@ export default function ReservationCalendar({ reservations }: Props) {
 
   return (
     <div className="p-4 bg-white shadow rounded">
+      
       <FullCalendar
-        plugins={[dayGridPlugin]}
+        plugins={[dayGridPlugin, interactionPlugin]} // interactionPluginを追加
         initialView="dayGridMonth"
         locale="ja"
         events={events}
         height="auto"
+        dateClick={(info: DateClickArg) => {
+          if (onDateClick) onDateClick(info.dateStr);
+        }}
       />
+
     </div>
   );
 }
