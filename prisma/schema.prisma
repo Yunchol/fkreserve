@@ -33,5 +33,16 @@ model Child {
   parent     User     @relation(fields: [parentId], references: [id])
   parentId   String             // 外部キー（保護者ID）
   createdAt  DateTime @default(now())
+  reservations Reservation[]
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  date      DateTime
+  type      String   // "basic" | "spot"
+  options   Json  // 後で
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId   String
+  createdAt DateTime @default(now())
 }
 
