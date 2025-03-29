@@ -29,7 +29,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow px-6 py-4 flex flex-wrap gap-2 justify-between items-center">
         <div className="text-sm md:text-base text-gray-700 font-medium">
           ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
         </div>
@@ -40,7 +40,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         <LogoutButton />
       </header>
 
-      <main className="max-w-screen-md mx-auto py-8 px-4">
+      <main className="max-w-screen-md mx-auto pt-24 px-4">
 
         <Card>
           <CardContent className="py-6">
