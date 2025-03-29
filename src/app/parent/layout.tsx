@@ -40,13 +40,8 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         <LogoutButton />
       </header>
 
-      <main className="max-w-screen-md mx-auto pt-24 px-4">
-
-        <Card>
-          <CardContent className="py-6">
-            {children}
-          </CardContent>
-        </Card>
+      <main className="max-w-screen-md mx-auto py-8 px-4">
+         {children}
       </main>
     </div>
   );

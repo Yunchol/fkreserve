@@ -44,14 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       <main className="max-w-screen-md mx-auto pt-24 px-4">
-
-       
-
-        <Card>
-          <CardContent className="py-6">
-            {children}
-          </CardContent>
-        </Card>
+        {children}
       </main>
     </div>
   );
