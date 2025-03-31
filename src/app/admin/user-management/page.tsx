@@ -120,39 +120,40 @@ export default function UserManagementPage() {
             </button>
 
             {expandedRoles[role] && (
-              <div className="space-y-4">
-                {(groupedUsers[role] ?? []).map((u) => (
-                  <Card key={u.id}>
-                    <CardHeader className="flex justify-between items-center">
-                      <CardTitle>{u.name}</CardTitle>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openEditModal(u)}
-                          className="text-sm px-2 py-1 bg-blue-500 text-white rounded"
-                        >
-                          編集
-                        </button>
-                        <button
-                          onClick={() => handleDelete(u.id)}
-                          className="text-sm px-2 py-1 bg-red-500 text-white rounded"
-                        >
-                          削除
-                        </button>
-                      </div>
-                    </CardHeader>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {(groupedUsers[role] ?? []).map((u) => (
+      <Card key={u.id} className="h-full">
+        <CardHeader className="flex justify-between items-center">
+          <CardTitle>{u.name}</CardTitle>
+          <div className="flex gap-2">
+            <button
+              onClick={() => openEditModal(u)}
+              className="text-sm px-2 py-1 bg-blue-500 text-white rounded"
+            >
+              編集
+            </button>
+            <button
+              onClick={() => handleDelete(u.id)}
+              className="text-sm px-2 py-1 bg-red-500 text-white rounded"
+            >
+              削除
+            </button>
+          </div>
+        </CardHeader>
 
-                    <CardContent className="text-sm space-y-1">
-                      <p><strong>メール：</strong>{u.email}</p>
-                      <p>
-                        <strong>ロール：</strong>
-                        <span className={getRoleStyle(u.role)}>{u.role}</span>
-                      </p>
-                      <p><strong>登録日：</strong>{format(new Date(u.createdAt), "yyyy/MM/dd")}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+        <CardContent className="text-sm space-y-1">
+          <p><strong>メール：</strong>{u.email}</p>
+          <p>
+            <strong>ロール：</strong>
+            <span className={getRoleStyle(u.role)}>{u.role}</span>
+          </p>
+          <p><strong>登録日：</strong>{format(new Date(u.createdAt), "yyyy/MM/dd")}</p>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+)}
+
           </div>
         ))
       )}

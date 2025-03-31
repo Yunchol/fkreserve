@@ -5,7 +5,6 @@ import { useUserStore } from "@/stores/userStore";
 import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <LogoutButton />
       </header>
 
-      <main className="max-w-screen-md mx-auto pt-24 px-4">
+      <main className="mx-auto pt-24 px-4">
         {children}
       </main>
     </div>
