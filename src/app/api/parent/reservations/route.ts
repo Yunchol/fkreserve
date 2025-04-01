@@ -32,6 +32,7 @@ export async function GET() {
   }
 }
 
+
 export async function POST(req: Request) {
     try {
       const token = (await cookies()).get("token")?.value;
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
     }
   }
 
+
   export async function PATCH(req: Request) {
     try {
       const token = (await cookies()).get("token")?.value;
@@ -81,13 +83,13 @@ export async function POST(req: Request) {
   
       const userId = payload.userId;
       const body = await req.json();
-      const { reservationId, newDate } = body;
+      const { reservationId, newDate, type, options } = body;
   
-      if (!reservationId || !newDate) {
-        return NextResponse.json({ error: "不正なリクエスト" }, { status: 400 });
+      if (!reservationId) {
+        return NextResponse.json({ error: "予約IDが必要です" }, { status: 400 });
       }
   
-      // ✅ この予約がこのユーザーの子どものものであることを確認
+      // ✅ ユーザー確認 & 所有チェック
       const reservation = await prisma.reservation.findUnique({
         where: { id: reservationId },
         include: {
@@ -99,20 +101,24 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "不正な予約ID" }, { status: 403 });
       }
   
-      // ✅ 日付更新
+      // ✅ 更新内容の組み立て
+      const updateData: any = {};
+      if (newDate) updateData.date = new Date(newDate);
+      if (type) updateData.type = type;
+      if (options) updateData.options = options;
+  
       const updated = await prisma.reservation.update({
         where: { id: reservationId },
-        data: {
-          date: new Date(newDate),
-        },
+        data: updateData,
       });
   
       return NextResponse.json({ success: true, reservation: updated });
     } catch (err) {
-      console.error("予約移動エラー:", err);
+      console.error("予約更新エラー:", err);
       return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
     }
   }
+  
   
   export async function DELETE(req: Request) {
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Reservation } from "@/types/reservation";
 
 type Props = {
@@ -13,9 +13,23 @@ type Props = {
 
 const AVAILABLE_OPTIONS = ["おやつ", "昼食", "夕食", "送迎"];
 
-export default function ReservationModal({ date, onClose, onSubmit }: Props) {
+export default function ReservationModal({
+  date,
+  editingReservation,
+  onClose,
+  onSubmit,
+  onDelete,
+}: Props) {
   const [type, setType] = useState<"basic" | "spot">("basic");
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+
+  // 編集モード時の初期値セット
+  useEffect(() => {
+    if (editingReservation) {
+      setType(editingReservation.type as "basic" | "spot");
+      setSelectedOptions(editingReservation.options);
+    }
+  }, [editingReservation]);
 
   const toggleOption = (opt: string) => {
     setSelectedOptions((prev) =>
@@ -28,7 +42,9 @@ export default function ReservationModal({ date, onClose, onSubmit }: Props) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded shadow-md space-y-4 w-[90%] max-w-md">
-        <h2 className="text-lg font-semibold">{date} の予約</h2>
+        <h2 className="text-lg font-semibold">
+          {date} の{editingReservation ? "予約編集" : "新規予約"}
+        </h2>
 
         {/* 利用タイプの選択 */}
         <div>
@@ -61,17 +77,30 @@ export default function ReservationModal({ date, onClose, onSubmit }: Props) {
           </div>
         </div>
 
-        {/* ボタン */}
-        <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="text-gray-600 hover:underline">
-            キャンセル
-          </button>
-          <button
-            onClick={() => onSubmit(type, selectedOptions)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            予約する
-          </button>
+        {/* ボタン群 */}
+        <div className="flex justify-between items-center pt-4">
+          {/* 左側：削除ボタン（編集時のみ表示） */}
+          {editingReservation && onDelete && (
+            <button
+              onClick={() => onDelete(editingReservation.id)}
+              className="text-red-600 hover:underline text-sm"
+            >
+              この予約を削除
+            </button>
+          )}
+
+          {/* 右側：キャンセル / 保存 */}
+          <div className="flex gap-2">
+            <button onClick={onClose} className="text-gray-600 hover:underline">
+              キャンセル
+            </button>
+            <button
+              onClick={() => onSubmit(type, selectedOptions)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {editingReservation ? "更新する" : "予約する"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -45,46 +45,90 @@ export default function ParentDashboardPage() {
     setShowModal(true);
   };
 
-  const handleReservationSubmit = async (
-    type: "basic" | "spot",
-    options: string[]
-  ) => {
-    if (!selectedChildId || !selectedDate) return;
-    try {
-      // 新しい予約をAPIに送信
-      await postReservation({
-        childId: selectedChildId,
-        date: selectedDate,
-        type,
-        options,
-      });
+    const handleReservationSubmit = async (
+      type: "basic" | "spot",
+      options: string[]
+    ) => {
+      if (!selectedChildId) return;
+    
+      // 更新処理の場合
+      if (editingReservation) {
+        try {
+          // 1. サーバーにPATCHリクエスト
+          await fetch("/api/parent/reservations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reservationId: editingReservation.id,
+              type,
+              options,
+            }),
+          });
+    
+          // 2. フロント側の状態を更新
+          setChildren((prev) =>
+            prev.map((child) =>
+              child.id === selectedChildId
+                ? {
+                    ...child,
+                    reservations: child.reservations.map((r) =>
+                      r.id === editingReservation.id
+                        ? { ...r, type, options }
+                        : r
+                    ),
+                  }
+                : child
+            )
+          );
+    
+          alert("予約を更新しました！");
+          setShowModal(false);
+          setEditingReservation(null);
+        } catch (err) {
+          alert("更新エラー");
+        }
+    
+        return;
+      }
+    
+      // 🔽 新規予約処理（今までのやつ）
+      if (!selectedDate) return;
+    
+      try {
+        await postReservation({
+          childId: selectedChildId,
+          date: selectedDate,
+          type,
+          options,
+        });
+    
+        setChildren((prev) =>
+          prev.map((child) =>
+            child.id === selectedChildId
+              ? {
+                  ...child,
+                  reservations: [
+                    ...child.reservations,
+                    {
+                      id: `${selectedChildId}-${selectedDate}`,
+                      date: selectedDate,
+                      type,
+                      options,
+                    },
+                  ],
+                }
+              : child
+          )
+        );
+    
+        alert("予約完了！");
+        setShowModal(false);
+        setSelectedDate(null);
+      } catch (err) {
+        alert("送信エラー");
+      }
+    };
   
-      // 成功後、該当の子どもの予約を更新
-      setChildren((prev) =>
-        prev.map((child) =>
-          child.id === selectedChildId
-            ? {
-                ...child,
-                reservations: [
-                  ...child.reservations,
-                  {
-                    id: `${selectedChildId}-${selectedDate}`, // 仮ID（サーバーIDが必要なら再取得もあり）
-                    date: selectedDate,
-                    type,
-                    options,
-                  },
-                ],
-              }
-            : child
-        )
-      );
-  
-      alert("予約完了！");
-      setShowModal(false);
-    } catch (err) {
-      alert("送信エラー");
-    }
-  };
 
     const handleReservationMove = async (reservationId: string, newDate: string) => {
         const childIndex = children.findIndex(c => c.id === selectedChildId);
