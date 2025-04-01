@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Reservation } from "@/types/reservation";
 
 type Props = {
   date: string;
+  editingReservation?: Reservation | null;
   onClose: () => void;
   onSubmit: (type: "basic" | "spot", options: string[]) => void;
+  onDelete?: (reservationId: string) => void;
 };
 
 const AVAILABLE_OPTIONS = ["おやつ", "昼食", "夕食", "送迎"];

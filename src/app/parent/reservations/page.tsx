@@ -25,6 +25,8 @@ export default function ParentDashboardPage() {
   const { selectedChildId } = useChildStore();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -83,6 +85,44 @@ export default function ParentDashboardPage() {
       alert("送信エラー");
     }
   };
+
+    const handleReservationMove = async (reservationId: string, newDate: string) => {
+        const childIndex = children.findIndex(c => c.id === selectedChildId);
+        if (childIndex === -1) return;
+    
+        setChildren(prev => {
+        const updated = [...prev];
+        const child = updated[childIndex];
+        const reservationIndex = child.reservations.findIndex(r => r.id === reservationId);
+        if (reservationIndex === -1) return prev;
+    
+        // 日付更新
+        child.reservations[reservationIndex].date = newDate;
+        return updated;
+        });
+    
+        // サーバーにも反映したいならAPI呼ぶ（例）
+        try {
+        await fetch("/api/parent/reservations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reservationId, newDate }),
+        });
+        } catch (err) {
+        alert("サーバーへの更新に失敗しました");
+        }
+    };
+
+    const handleEventClick = (reservationId: string) => {
+      const reservation = selectedChild?.reservations.find(r => r.id === reservationId);
+      if (reservation) {
+        setEditingReservation(reservation);
+        setSelectedDate(null); 
+        setShowModal(true);
+      }
+    };
+    
+  
   
 
     return (
@@ -93,15 +133,44 @@ export default function ParentDashboardPage() {
           <ReservationCalendar
             reservations={selectedChild.reservations}
             onDateClick={handleDateClick}
+            onReservationMove={handleReservationMove}
+            onEventClick={handleEventClick}
           />
         ) : (
           <p>子どもを選択してください</p>
         )}
-        {showModal && selectedDate && (
+        {showModal && (selectedDate || editingReservation) && (
           <ReservationModal
-            date={selectedDate}
-            onClose={() => setShowModal(false)}
+            date={selectedDate ?? editingReservation?.date ?? ""}
+            editingReservation={editingReservation}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedDate(null);
+              setEditingReservation(null);
+            }}
             onSubmit={handleReservationSubmit}
+            onDelete={async (reservationId) => {
+              // 削除処理（ローカルステートとAPI両方）
+              setChildren(prev =>
+                prev.map(child =>
+                  child.id === selectedChildId
+                    ? {
+                        ...child,
+                        reservations: child.reservations.filter(r => r.id !== reservationId),
+                      }
+                    : child
+                )
+              );
+
+              await fetch("/api/parent/reservations", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reservationId }),
+              });
+
+              setShowModal(false);
+              setEditingReservation(null);
+            }}
           />
         )}
       </div>

@@ -70,3 +70,85 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
     }
   }
+
+  export async function PATCH(req: Request) {
+    try {
+      const token = (await cookies()).get("token")?.value;
+      if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
+  
+      const payload = verifyToken(token);
+      if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+  
+      const userId = payload.userId;
+      const body = await req.json();
+      const { reservationId, newDate } = body;
+  
+      if (!reservationId || !newDate) {
+        return NextResponse.json({ error: "不正なリクエスト" }, { status: 400 });
+      }
+  
+      // ✅ この予約がこのユーザーの子どものものであることを確認
+      const reservation = await prisma.reservation.findUnique({
+        where: { id: reservationId },
+        include: {
+          child: true,
+        },
+      });
+  
+      if (!reservation || reservation.child.parentId !== userId) {
+        return NextResponse.json({ error: "不正な予約ID" }, { status: 403 });
+      }
+  
+      // ✅ 日付更新
+      const updated = await prisma.reservation.update({
+        where: { id: reservationId },
+        data: {
+          date: new Date(newDate),
+        },
+      });
+  
+      return NextResponse.json({ success: true, reservation: updated });
+    } catch (err) {
+      console.error("予約移動エラー:", err);
+      return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
+    }
+  }
+  
+  export async function DELETE(req: Request) {
+    try {
+      const token = (await cookies()).get("token")?.value;
+      if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
+  
+      const payload = verifyToken(token);
+      if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+  
+      const userId = payload.userId;
+      const body = await req.json();
+      const { reservationId } = body;
+  
+      if (!reservationId) {
+        return NextResponse.json({ error: "予約IDが必要です" }, { status: 400 });
+      }
+  
+      // 予約がこのユーザーの子どものものであるか確認
+      const reservation = await prisma.reservation.findUnique({
+        where: { id: reservationId },
+        include: { child: true },
+      });
+  
+      if (!reservation || reservation.child.parentId !== userId) {
+        return NextResponse.json({ error: "不正な予約ID" }, { status: 403 });
+      }
+  
+      // 削除実行
+      await prisma.reservation.delete({
+        where: { id: reservationId },
+      });
+  
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      console.error("予約削除エラー:", err);
+      return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
+    }
+  }
+  
