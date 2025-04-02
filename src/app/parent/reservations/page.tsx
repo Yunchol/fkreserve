@@ -40,10 +40,19 @@ export default function ParentDashboardPage() {
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
   const handleDateClick = (date: string) => {
-    console.log("クリックした日付:", date); 
+    const alreadyExists = selectedChild?.reservations.some(
+      (r) => r.date === date
+    );
+  
+    if (alreadyExists) {
+      alert("この日はすでに予約があります！");
+      return;
+    }
+  
     setSelectedDate(date);
     setShowModal(true);
   };
+  
 
     const handleReservationSubmit = async (
       type: "basic" | "spot",

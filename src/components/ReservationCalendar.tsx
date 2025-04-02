@@ -46,20 +46,58 @@ export default function ReservationCalendar({
         events={events}
         editable={true} // ドラッグ可能にする
         height="auto"
+
+        // ✅ 日付クリック時：すでに予約があればモーダルを開かない
         dateClick={(info: DateClickArg) => {
+          const alreadyExists = reservations.some((r) => r.date === info.dateStr);
+          if (alreadyExists) {
+            alert("この日はすでに予約があります");
+            return;
+          }
           if (onDateClick) onDateClick(info.dateStr);
         }}
-        eventDrop={(info: EventDropArg) => {
-          // ドラッグ後に日付が変更されたときの処理
-          if (onReservationMove) {
-            onReservationMove(info.event.id, info.event.startStr);
-          }
-        }}
+
+        // ✅ イベントクリック：編集モーダルを開く
         eventClick={(info: EventClickArg) => {
           if (onEventClick) {
             onEventClick(info.event.id);
           }
         }}
+
+        // ✅ ドラッグ移動時：移動先に予約がある場合はキャンセル
+        eventDrop={(info: EventDropArg) => {
+          const targetDate = info.event.startStr;
+          const reservationId = info.event.id;
+
+          const isDuplicate = reservations.some(
+            (r) => r.date === targetDate && r.id !== reservationId
+          );
+
+          if (isDuplicate) {
+            alert("その日にはすでに予約があります！");
+            info.revert(); // 元に戻す
+            return;
+          }
+
+          if (onReservationMove) {
+            onReservationMove(reservationId, targetDate);
+          }
+        }}
+
+        // ✅ 保険的に eventAllow でもブロック（移動先に他の予約がある場合）
+        eventAllow={(dropInfo, draggedEvent) => {
+          if (!draggedEvent) return false; // nullだったら許可しない
+        
+          const targetDate = dropInfo.startStr;
+          const reservationId = draggedEvent.id;
+        
+          const isDuplicate = reservations.some(
+            (r) => r.date === targetDate && r.id !== reservationId
+          );
+        
+          return !isDuplicate;
+        }}
+        
       />
     </div>
   );
