@@ -1,5 +1,3 @@
-//これは消す
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -22,7 +20,7 @@ type Child = {
   reservations: Reservation[];
 };
 
-export default function ParentDashboardPage() {
+export default function CalendarEditPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const { selectedChildId } = useChildStore();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
