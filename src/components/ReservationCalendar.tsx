@@ -4,6 +4,7 @@ import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
 import { EventDropArg } from "@fullcalendar/core/index.js";
 import { EventClickArg } from "@fullcalendar/core/index.js";
+import { format } from "date-fns"; 
 
 type Reservation = {
   id: string;
@@ -37,6 +38,11 @@ export default function ReservationCalendar({
     setEvents(mapped);
   }, [reservations]);
 
+  // 🔁 日付比較用のヘルパー関数
+  const isSameDay = (a: string | Date, b: string | Date) => {
+    return format(new Date(a), "yyyy-MM-dd") === format(new Date(b), "yyyy-MM-dd");
+  };
+
   return (
     <div className="p-4 bg-white shadow rounded">
       <FullCalendar
@@ -44,60 +50,57 @@ export default function ReservationCalendar({
         initialView="dayGridMonth"
         locale="ja"
         events={events}
-        editable={true} // ドラッグ可能にする
+        editable={true}
         height="auto"
 
-        // ✅ 日付クリック時：すでに予約があればモーダルを開かない
+        // ✅ 日付クリック
         dateClick={(info: DateClickArg) => {
-          const alreadyExists = reservations.some((r) => r.date === info.dateStr);
+          const alreadyExists = reservations.some((r) =>
+            isSameDay(r.date, info.dateStr)
+          );
           if (alreadyExists) {
             alert("この日はすでに予約があります");
             return;
           }
-          if (onDateClick) onDateClick(info.dateStr);
+          onDateClick?.(info.dateStr);
         }}
 
-        // ✅ イベントクリック：編集モーダルを開く
+        // ✅ イベントクリック
         eventClick={(info: EventClickArg) => {
-          if (onEventClick) {
-            onEventClick(info.event.id);
-          }
+          onEventClick?.(info.event.id);
         }}
 
-        // ✅ ドラッグ移動時：移動先に予約がある場合はキャンセル
+        // ✅ ドラッグ移動
         eventDrop={(info: EventDropArg) => {
-          const targetDate = info.event.startStr;
+          const targetDate = info.event.start!;
           const reservationId = info.event.id;
 
           const isDuplicate = reservations.some(
-            (r) => r.date === targetDate && r.id !== reservationId
+            (r) => isSameDay(r.date, targetDate) && r.id !== reservationId
           );
 
           if (isDuplicate) {
             alert("その日にはすでに予約があります！");
-            info.revert(); // 元に戻す
+            info.revert();
             return;
           }
 
-          if (onReservationMove) {
-            onReservationMove(reservationId, targetDate);
-          }
+          onReservationMove?.(reservationId, format(targetDate, "yyyy-MM-dd"));
         }}
 
-        // ✅ 保険的に eventAllow でもブロック（移動先に他の予約がある場合）
+        // ✅ eventAllow：事前にブロック
         eventAllow={(dropInfo, draggedEvent) => {
-          if (!draggedEvent) return false; // nullだったら許可しない
-        
-          const targetDate = dropInfo.startStr;
+          if (!draggedEvent) return false;
+
+          const targetDate = dropInfo.start;
           const reservationId = draggedEvent.id;
-        
+
           const isDuplicate = reservations.some(
-            (r) => r.date === targetDate && r.id !== reservationId
+            (r) => isSameDay(r.date, targetDate) && r.id !== reservationId
           );
-        
+
           return !isDuplicate;
         }}
-        
       />
     </div>
   );

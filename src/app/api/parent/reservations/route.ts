@@ -34,43 +34,59 @@ export async function GET() {
 
 
 export async function POST(req: Request) {
-    try {
-      const token = (await cookies()).get("token")?.value;
-      if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
-  
-      const payload = verifyToken(token);
-      if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
-  
-      const userId = payload.userId;
-      const body = await req.json();
-  
-      const { childId, date, type, options } = body;
-  
-      // ✅ childIdがこのユーザーの子どもかチェック
-      const child = await prisma.child.findUnique({
-        where: { id: childId },
-      });
-  
-      if (!child || child.parentId !== userId) {
-        return NextResponse.json({ error: "不正な子どもID" }, { status: 403 });
-      }
-  
-      // ✅ 予約作成
-      const newReservation = await prisma.reservation.create({
-        data: {
-          childId,
-          date: new Date(date),
-          type,
-          options,
-        },
-      });
-  
-      return NextResponse.json({ reservation: newReservation });
-    } catch (err) {
-      console.error("予約登録エラー:", err);
-      return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
+  try {
+    const token = (await cookies()).get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "未ログイン" }, { status: 401 });
     }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    }
+
+    const userId = payload.userId;
+    const body = await req.json();
+    const { childId, date, type, options } = body;
+
+    // ✅ 子どもがこのユーザーのものか確認
+    const child = await prisma.child.findUnique({
+      where: { id: childId },
+    });
+
+    if (!child || child.parentId !== userId) {
+      return NextResponse.json({ error: "不正な子どもID" }, { status: 403 });
+    }
+
+    // ✅ 同じ子どもに同じ日付の予約がすでにあるか確認
+    const existing = await prisma.reservation.findFirst({
+      where: {
+        childId,
+        date: new Date(date),
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json({ error: "この日はすでに予約があります" }, { status: 409 });
+    }
+
+    // ✅ 予約作成
+    const newReservation = await prisma.reservation.create({
+      data: {
+        childId,
+        date: new Date(date),
+        type,
+        options,
+      },
+    });
+
+    return NextResponse.json({ reservation: newReservation });
+  } catch (err) {
+    console.error("予約登録エラー:", err);
+    return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
   }
+}
+
 
 
   export async function PATCH(req: Request) {

@@ -134,7 +134,11 @@ export default function ParentDashboardPage() {
         setShowModal(false);
         setSelectedDate(null);
       } catch (err) {
-        alert("送信エラー");
+        if (err instanceof Error) {
+          alert(err.message);
+        } else {
+          alert("予期しないエラーが発生しました");
+        }
       }
     };
   
