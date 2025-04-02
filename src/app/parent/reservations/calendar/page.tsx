@@ -1,7 +1,10 @@
 "use client";
 
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import ReservationCalendar from "@/components/ReservationCalendar";
+import { format } from "date-fns";
 import { useChildStore } from "@/stores/childStore";
 import ChildSelector from "@/components/ChildSelector";
 
@@ -18,9 +21,10 @@ type Child = {
   reservations: Reservation[];
 };
 
-export default function ReservationCalendarViewPage() {
+export default function ReservationCalendarPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const { selectedChildId } = useChildStore();
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -33,19 +37,37 @@ export default function ReservationCalendarViewPage() {
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
+  useEffect(() => {
+    if (!selectedChild) return;
+    const mapped = selectedChild.reservations.map((res) => ({
+      id: res.id,
+      title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${res.options.join("・")}`,
+      start: res.date,
+      allDay: true,
+    }));
+    setEvents(mapped);
+  }, [selectedChild]);
+
   return (
     <div className="p-4">
       <ChildSelector children={children} />
       <h1 className="text-xl font-semibold mb-4">予約状況カレンダー</h1>
 
       {selectedChild ? (
-        <ReservationCalendar
-          reservations={selectedChild.reservations}
-          // 表示専用なので操作イベントは渡さない
-        />
+        <div className="bg-white shadow rounded">
+          <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locale="ja"
+            events={events}
+            editable={false}
+            selectable={false}
+            height="auto"
+          />
+        </div>
       ) : (
         <p>子どもを選択してください</p>
       )}
     </div>
   );
-}
+} 

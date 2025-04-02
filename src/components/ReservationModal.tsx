@@ -20,13 +20,11 @@ export default function ReservationModal({
   onSubmit,
   onDelete,
 }: Props) {
-  const [type, setType] = useState<"basic" | "spot">("basic");
+  const [type] = useState<"spot">("spot"); // ← type を spot で固定
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
-  // 編集モード時の初期値セット
   useEffect(() => {
     if (editingReservation) {
-      setType(editingReservation.type as "basic" | "spot");
       setSelectedOptions(editingReservation.options);
     }
   }, [editingReservation]);
@@ -46,17 +44,15 @@ export default function ReservationModal({
           {date} の{editingReservation ? "予約編集" : "新規予約"}
         </h2>
 
-        {/* 利用タイプの選択 */}
+        {/* 利用タイプ（固定で表示だけ） */}
         <div>
           <label className="block mb-1 font-medium">利用タイプ</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as "basic" | "spot")}
-            className="w-full border p-2 rounded"
-          >
-            <option value="basic">基本利用</option>
-            <option value="spot">スポット利用</option>
-          </select>
+          <input
+            type="text"
+            value="スポット利用"
+            disabled
+            className="w-full border p-2 rounded bg-gray-100 text-gray-600"
+          />
         </div>
 
         {/* オプション選択 */}
@@ -79,7 +75,6 @@ export default function ReservationModal({
 
         {/* ボタン群 */}
         <div className="flex justify-between items-center pt-4">
-          {/* 左側：削除ボタン（編集時のみ表示） */}
           {editingReservation && onDelete && (
             <button
               onClick={() => onDelete(editingReservation.id)}
@@ -88,8 +83,6 @@ export default function ReservationModal({
               この予約を削除
             </button>
           )}
-
-          {/* 右側：キャンセル / 保存 */}
           <div className="flex gap-2">
             <button onClick={onClose} className="text-gray-600 hover:underline">
               キャンセル

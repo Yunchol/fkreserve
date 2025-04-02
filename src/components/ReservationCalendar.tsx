@@ -15,6 +15,9 @@ type Reservation = {
 
 type Props = {
   reservations: Reservation[];
+  editable?: boolean;
+  allowClick?: boolean;
+  allowEventClick?: boolean;
   onDateClick?: (dateStr: string) => void;
   onReservationMove?: (reservationId: string, newDateStr: string) => void;
   onEventClick?: (reservationId: string) => void;
@@ -22,9 +25,12 @@ type Props = {
 
 export default function ReservationCalendar({
   reservations,
+  editable = false,
+  allowClick = false,
+  allowEventClick = false,
   onDateClick,
   onReservationMove,
-  onEventClick
+  onEventClick,
 }: Props) {
   const [events, setEvents] = useState<any[]>([]);
 
@@ -50,28 +56,33 @@ export default function ReservationCalendar({
         initialView="dayGridMonth"
         locale="ja"
         events={events}
-        editable={true}
+        editable={editable}
         height="auto"
 
         // ✅ 日付クリック
         dateClick={(info: DateClickArg) => {
-          const alreadyExists = reservations.some((r) =>
-            isSameDay(r.date, info.dateStr)
-          );
+          if (!allowClick || !onDateClick) return;
+          const alreadyExists = reservations.some((r) => isSameDay(r.date, info.dateStr));
           if (alreadyExists) {
             alert("この日はすでに予約があります");
             return;
           }
-          onDateClick?.(info.dateStr);
+          onDateClick(info.dateStr);
         }}
 
         // ✅ イベントクリック
         eventClick={(info: EventClickArg) => {
-          onEventClick?.(info.event.id);
+          if (!allowEventClick || !onEventClick) return;
+          onEventClick(info.event.id);
         }}
 
         // ✅ ドラッグ移動
         eventDrop={(info: EventDropArg) => {
+          if (!editable || !onReservationMove) {
+            info.revert();
+            return;
+          }
+
           const targetDate = info.event.start!;
           const reservationId = info.event.id;
 
@@ -85,12 +96,12 @@ export default function ReservationCalendar({
             return;
           }
 
-          onReservationMove?.(reservationId, format(targetDate, "yyyy-MM-dd"));
+          onReservationMove(reservationId, format(targetDate, "yyyy-MM-dd"));
         }}
 
         // ✅ eventAllow：事前にブロック
         eventAllow={(dropInfo, draggedEvent) => {
-          if (!draggedEvent) return false;
+          if (!editable || !draggedEvent) return false;
 
           const targetDate = dropInfo.start;
           const reservationId = draggedEvent.id;
