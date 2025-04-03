@@ -18,7 +18,7 @@ type Props = {
   editable?: boolean;
   allowClick?: boolean;
   allowEventClick?: boolean;
-  onDateClick?: (dateStr: string) => void;
+  onDateClick?: (info: DateClickArg) => void;
   onReservationMove?: (reservationId: string, newDateStr: string) => void;
   onEventClick?: (reservationId: string) => void;
 };
@@ -67,8 +67,9 @@ export default function ReservationCalendar({
             alert("この日はすでに予約があります");
             return;
           }
-          onDateClick(info.dateStr);
+          onDateClick(info);
         }}
+        
 
         // ✅ イベントクリック
         eventClick={(info: EventClickArg) => {

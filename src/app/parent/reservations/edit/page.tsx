@@ -6,6 +6,7 @@ import { useChildStore } from "@/stores/childStore";
 import ChildSelector from "@/components/ChildSelector";
 import { postReservation } from "@/lib/api/reservation";
 import ReservationModal from "@/components/ReservationModal";
+import { DateClickArg } from "@fullcalendar/interaction";
 
 type Reservation = {
   id: string;
@@ -38,13 +39,15 @@ export default function CalendarEditPage() {
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
-  const handleDateClick = (date: string) => {
+  const handleDateClick = (info: DateClickArg) => {
+    const date = info.dateStr;
+  
     const alreadyExists = selectedChild?.reservations.some(r => r.date === date);
     if (alreadyExists) {
       alert("この日はすでに予約があります！");
       return;
     }
-
+  
     setSelectedDate(date);
     setEditingReservation(null);
     setShowModal(true);

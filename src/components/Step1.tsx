@@ -5,11 +5,11 @@ import React from "react";
 type Props = {
   weeklyUsage: number;
   setWeeklyUsage: (count: number) => void;
-  selectedDays: string[];
-  setSelectedDays: (days: string[]) => void;
+  selectedDays: { [key: string]: boolean };
+  setSelectedDays: (days: { [key: string]: boolean }) => void;
 };
 
-const DAYS = ["月", "火", "水", "木", "金"];
+const DAYS = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日"];
 
 export default function Step1({
   weeklyUsage,
@@ -18,15 +18,17 @@ export default function Step1({
   setSelectedDays,
 }: Props) {
   const handleDayToggle = (day: string) => {
-    if (selectedDays.includes(day)) {
-      setSelectedDays(selectedDays.filter((d) => d !== day));
-    } else {
-      if (selectedDays.length < weeklyUsage) {
-        setSelectedDays([...selectedDays, day]);
-      } else {
-        alert(`週${weeklyUsage}回なので${weeklyUsage}つまで選択できます`);
-      }
+    const currentCount = Object.values(selectedDays).filter(Boolean).length;
+
+    if (!selectedDays[day] && currentCount >= weeklyUsage) {
+      alert(`週${weeklyUsage}回なので${weeklyUsage}つまで選択できます`);
+      return;
     }
+
+    setSelectedDays({
+      ...selectedDays,
+      [day]: !selectedDays[day],
+    });
   };
 
   return (
@@ -39,7 +41,10 @@ export default function Step1({
           onChange={(e) => {
             const value = parseInt(e.target.value);
             setWeeklyUsage(value);
-            setSelectedDays([]); // 選び直しのためにリセット
+            // 曜日リセット
+            const resetDays: { [key: string]: boolean } = {};
+            DAYS.forEach((day) => (resetDays[day] = false));
+            setSelectedDays(resetDays);
           }}
           className="border p-2 rounded w-full max-w-xs"
         >
@@ -53,22 +58,21 @@ export default function Step1({
 
       {/* 曜日の選択 */}
       <div>
-        <label className="block font-medium mb-1">利用曜日（{selectedDays.length}/{weeklyUsage}）</label>
+        <label className="block font-medium mb-1">
+          利用曜日（{Object.values(selectedDays).filter((v) => v).length}/{weeklyUsage}）
+        </label>
         <div className="flex gap-2 flex-wrap">
-          {DAYS.map((day) => {
-            const selected = selectedDays.includes(day);
-            return (
-              <button
-                key={day}
-                onClick={() => handleDayToggle(day)}
-                className={`px-4 py-2 rounded border ${
-                  selected ? "bg-blue-600 text-white" : "bg-white"
-                }`}
-              >
-                {day}
-              </button>
-            );
-          })}
+          {DAYS.map((day) => (
+            <button
+              key={day}
+              onClick={() => handleDayToggle(day)}
+              className={`px-4 py-2 rounded border ${
+                selectedDays[day] ? "bg-blue-600 text-white" : "bg-white"
+              }`}
+            >
+              {day}
+            </button>
+          ))}
         </div>
       </div>
     </div>
