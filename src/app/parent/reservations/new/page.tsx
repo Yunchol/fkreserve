@@ -6,15 +6,11 @@ import ChildSelector from "@/components/ChildSelector";
 import ReservationCalendar from "@/components/ReservationCalendar";
 import Step1 from "@/components/Step1";
 import Step2 from "@/components/Step2";
-import { format } from "date-fns";
+import Step3 from "@/components/Step3";
+import ReservationModal from "@/components/ReservationModal";
+import { Reservation } from "@/types/reservation";
 import { DateClickArg } from "@fullcalendar/interaction";
-
-type Reservation = {
-  id: string;
-  date: string;
-  type: "basic" | "spot";
-  options: string[];
-};
+import { format } from "date-fns";
 
 type Child = {
   id: string;
@@ -36,6 +32,8 @@ export default function NewReservationPage() {
   const [spotDays, setSpotDays] = useState(0);
   const [spotSelectedDates, setSpotSelectedDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
+
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
   const [children, setChildren] = useState<Child[]>([]);
   const { selectedChildId } = useChildStore();
@@ -79,17 +77,47 @@ export default function NewReservationPage() {
     }
   };
 
+  const handleEventClick = (reservationId: string) => {
+    const reservation = calendarEvents.find((r) => r.id === reservationId);
+    if (reservation) {
+      setEditingReservation(reservation);
+    }
+  };
+
+  const handleModalClose = () => {
+    setEditingReservation(null);
+  };
+
+  const handleModalSubmit = (type: "basic" | "spot", options: string[]) => {
+    if (!editingReservation) return;
+
+    setCalendarEvents((prev) =>
+      prev.map((r) =>
+        r.id === editingReservation.id ? { ...r, options } : r
+      )
+    );
+    handleModalClose();
+  };
+
   useEffect(() => {
     const generateBaseEvents = () => {
       const startOfNextMonth = new Date();
       startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
       startOfNextMonth.setDate(1);
 
-      const endOfNextMonth = new Date(startOfNextMonth.getFullYear(), startOfNextMonth.getMonth() + 1, 0);
+      const endOfNextMonth = new Date(
+        startOfNextMonth.getFullYear(),
+        startOfNextMonth.getMonth() + 1,
+        0
+      );
 
       const newEvents: Reservation[] = [];
 
-      for (let d = new Date(startOfNextMonth); d <= endOfNextMonth; d.setDate(d.getDate() + 1)) {
+      for (
+        let d = new Date(startOfNextMonth);
+        d <= endOfNextMonth;
+        d.setDate(d.getDate() + 1)
+      ) {
         const dayName = d.toLocaleDateString("ja-JP", { weekday: "long" });
         const formatted = format(d, "yyyy-MM-dd");
 
@@ -108,7 +136,6 @@ export default function NewReservationPage() {
         }
       }
 
-      // すでに drag されたイベントはそのまま、再生成はしない
       setCalendarEvents((prev) => [
         ...prev.filter((e) => !(e.type === "basic" && !e.options.length)),
         ...newEvents,
@@ -135,6 +162,7 @@ export default function NewReservationPage() {
               setSelectedDays={setSelectedDays}
             />
           )}
+
           {activeStep === 1 && (
             <Step2
               spotDays={spotDays}
@@ -144,12 +172,30 @@ export default function NewReservationPage() {
             />
           )}
 
+          {activeStep === 2 && (
+            <Step3
+              calendarEvents={calendarEvents}
+              setCalendarEvents={setCalendarEvents}
+            />
+          )}
+
           <ReservationCalendar
             reservations={calendarEvents}
             editable
             allowClick
+            allowEventClick={activeStep === 2}
             onDateClick={handleDateClick}
+            onEventClick={handleEventClick}
           />
+
+          {editingReservation && (
+            <ReservationModal
+              date={editingReservation.date}
+              editingReservation={editingReservation}
+              onClose={handleModalClose}
+              onSubmit={handleModalSubmit}
+            />
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             {activeStep > 0 && (
@@ -162,11 +208,9 @@ export default function NewReservationPage() {
             )}
             <button
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              onClick={() =>
-                setActiveStep((prev) => (prev < 1 ? prev + 1 : prev))
-              }
+              onClick={() => setActiveStep((prev) => (prev < 3 ? prev + 1 : prev))}
             >
-              {activeStep === 1 ? "確認へ" : "次へ"}
+              {activeStep === 2 ? "確認へ" : "次へ"}
             </button>
           </div>
         </>
@@ -176,3 +220,5 @@ export default function NewReservationPage() {
     </div>
   );
 }
+
+//step4で送信ロジックとかも考えるんだけど、まだできてないからしっかりやる
