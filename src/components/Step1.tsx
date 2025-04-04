@@ -18,18 +18,32 @@ export default function Step1({
   setSelectedDays,
 }: Props) {
   const handleDayToggle = (day: string) => {
-    const currentCount = Object.values(selectedDays).filter(Boolean).length;
-
-    if (!selectedDays[day] && currentCount >= weeklyUsage) {
-      alert(`週${weeklyUsage}回なので${weeklyUsage}つまで選択できます`);
-      return;
-    }
-
-    setSelectedDays({
-      ...selectedDays,
-      [day]: !selectedDays[day],
+    setSelectedDays((prev) => {
+      const currentCount = Object.values(prev).filter(Boolean).length;
+      const isSelected = prev[day] ?? false;
+  
+      // すでに選択済 → OFF にする
+      if (isSelected) {
+        return {
+          ...prev,
+          [day]: false,
+        };
+      }
+  
+      // 未選択だが上限に達してる → 拒否
+      if (currentCount >= weeklyUsage) {
+        alert(`週${weeklyUsage}回なので${weeklyUsage}つまで選択できます`);
+        return prev;
+      }
+  
+      // 未選択かつ上限未満 → ON にする
+      return {
+        ...prev,
+        [day]: true,
+      };
     });
   };
+  
 
   return (
     <div className="space-y-4">
@@ -48,7 +62,7 @@ export default function Step1({
           }}
           className="border p-2 rounded w-full max-w-xs"
         >
-          {[1, 2, 3, 4, 5].map((num) => (
+          {[0, 1, 2, 3, 4, 5].map((num) => (
             <option key={num} value={num}>
               週{num}回
             </option>
