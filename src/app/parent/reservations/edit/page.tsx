@@ -169,15 +169,17 @@ export default function CalendarEditPage() {
       <ChildSelector children={children} />
       <h1 className="text-xl font-semibold mb-4">予約カレンダー（編集）</h1>
       {selectedChild ? (
-        <ReservationCalendar
-          reservations={selectedChild.reservations}
-          editable
-          allowClick
-          allowEventClick
-          onDateClick={handleDateClick}
-          onReservationMove={handleReservationMove}
-          onEventClick={handleEventClick}
-        />
+       <ReservationCalendar
+       reservations={selectedChild.reservations}
+       editable
+       allowClick
+       allowEventClick
+       mode="edit" // ← 追加！
+       onDateClick={handleDateClick}
+       onReservationMove={handleReservationMove}
+       onEventClick={handleEventClick}
+     />
+     
       ) : (
         <p>子どもを選択してください</p>
       )}

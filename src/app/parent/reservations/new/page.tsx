@@ -270,16 +270,16 @@ export default function NewReservationPage() {
   
           {/* 右カラム：カレンダー（大きく表示） */}
           <div className="md:col-span-9">
-            <ReservationCalendar
-              reservations={calendarEvents}
-              editable
-              allowClick
-              allowEventClick={activeStep === 2}
-              onDateClick={handleDateClick}
-              onEventClick={handleEventClick}
-              startDate={format(startOfNextMonth, "yyyy-MM-dd")}
-              endDate={format(new Date(endOfNextMonth.getFullYear(), endOfNextMonth.getMonth(), endOfNextMonth.getDate() + 1), "yyyy-MM-dd")}
-            />
+          <ReservationCalendar
+            reservations={calendarEvents}
+            editable
+            allowClick
+            allowEventClick={activeStep === 2}
+            mode="new"
+            onDateClick={handleDateClick}
+            onEventClick={handleEventClick}
+          />
+
           </div>
         </div>
       ) : (

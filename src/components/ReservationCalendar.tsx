@@ -22,8 +22,7 @@ type Props = {
   onDateClick?: (info: DateClickArg) => void;
   onReservationMove?: (reservationId: string, newDateStr: string) => void;
   onEventClick?: (reservationId: string) => void;
-  startDate?: string; // 🔸 表示開始日
-  endDate?: string;   // 🔸 表示終了日
+  mode?: "new" | "edit"; // 🔸 追加
 };
 
 export default function ReservationCalendar({
@@ -34,8 +33,7 @@ export default function ReservationCalendar({
   onDateClick,
   onReservationMove,
   onEventClick,
-  startDate,
-  endDate,
+  mode = "new", // 🔸 デフォルトは "new"
 }: Props) {
   const [events, setEvents] = useState<any[]>([]);
 
@@ -53,19 +51,27 @@ export default function ReservationCalendar({
     return format(new Date(a), "yyyy-MM-dd") === format(new Date(b), "yyyy-MM-dd");
   };
 
+  // 🔸 カレンダー範囲の自動設定
+  const today = new Date();
+  const firstDayNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const lastDayNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+
+  const calendarStart = format(firstDayNextMonth, "yyyy-MM-dd");
+  const calendarEnd = mode === "new" ? format(lastDayNextMonth, "yyyy-MM-dd") : undefined;
+
   return (
     <div className="p-4 bg-white shadow rounded">
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        initialDate={startDate ?? format(new Date(), "yyyy-MM-dd")} // 初期表示日
+        initialDate={calendarStart}
         locale="ja"
         events={events}
         editable={editable}
         height="auto"
         validRange={{
-          start: startDate,
-          end: endDate,
+          start: calendarStart,
+          end: calendarEnd,
         }}
         dateClick={(info: DateClickArg) => {
           if (!allowClick || !onDateClick) return;
