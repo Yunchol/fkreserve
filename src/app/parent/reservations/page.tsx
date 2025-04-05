@@ -52,27 +52,30 @@ export default function ReservationPage() {
 
   return (
     <div className="p-4">
-      <ChildSelector children={children} />
+      {/* ▼ 上部バー：セレクター + ボタン */}
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <ChildSelector children={children} />
 
-      <div className="flex gap-4 my-4">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          onClick={() => router.push("/parent/reservations/new")}
-        >
-          新規予約を作成
-        </button>
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          onClick={() => router.push("/parent/reservations/edit")}
-        >
-          予約を編集
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+            onClick={() => router.push("/parent/reservations/new")}
+          >
+            新規予約を作成
+          </button>
+          <button
+            className="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 border border-blue-300 text-sm"
+            onClick={() => router.push("/parent/reservations/edit")}
+          >
+            予約を編集
+          </button>
+        </div>
       </div>
 
-      <h1 className="text-xl font-semibold mb-4">予約状況カレンダー</h1>
+      <h1 className="text-lg font-semibold mb-4">予約状況カレンダー</h1>
 
       {selectedChild ? (
-        <div className="bg-white shadow rounded">
+        <div className="bg-white shadow rounded p-4">
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"

@@ -35,6 +35,16 @@ export default function NewReservationPage() {
   const { selectedChildId } = useChildStore();
   const selectedChild = children.find((c) => c.id === selectedChildId);
   const router = useRouter();
+  //FullCalendarの表示日時範囲
+  const startOfNextMonth = new Date();
+    startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
+    startOfNextMonth.setDate(1);
+
+    const endOfNextMonth = new Date(
+      startOfNextMonth.getFullYear(),
+      startOfNextMonth.getMonth() + 1,
+      0
+    );
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -161,6 +171,7 @@ export default function NewReservationPage() {
       await postReservations(selectedChildId, toSave);
 
       alert("予約を保存しました！");
+      router.push("/parent/reservations");
     } catch (err) {
       console.error("保存エラー", err);
       alert("保存に失敗しました。");
@@ -168,12 +179,11 @@ export default function NewReservationPage() {
   };
 
   console.log("selectedDays:", selectedDays);
-console.log("spotDays:", spotDays);
-console.log("calendarEvents:", calendarEvents);
-console.log("selectedChildId:", selectedChildId);
+  console.log("spotDays:", spotDays);
+  console.log("calendarEvents:", calendarEvents);
+  console.log("selectedChildId:", selectedChildId);
 
   
-
   return (
     <div className="p-4">
       <h1 className="text-xl font-semibold mb-4">新規予約作成</h1>
@@ -228,33 +238,33 @@ console.log("selectedChildId:", selectedChildId);
   
            {/* ナビボタン */}
            <div className="flex justify-between items-center pt-4">
-  <button
-    className="text-red-600 hover:underline"
-    onClick={() => {
-      if (confirm("ステップを中止して、最初の画面に戻りますか？")) {
-        router.push("/parent/reservations");
-      }
-    }}
-  >
-    中止してやり直す
-  </button>
+            <button
+              className="text-red-600 hover:underline"
+              onClick={() => {
+                if (confirm("ステップを中止して、最初の画面に戻りますか？")) {
+                  router.push("/parent/reservations");
+                }
+              }}
+            >
+              中止してやり直す
+            </button>
 
-  {activeStep < 3 ? (
-    <button
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      onClick={() => setActiveStep((prev) => prev + 1)}
-    >
-      {activeStep === 2 ? "確認へ" : "次へ"}
-    </button>
-  ) : (
-    <button
-      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-      onClick={handleSave}
-    >
-      保存する
-    </button>
-  )}
-</div>
+            {activeStep < 3 ? (
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={() => setActiveStep((prev) => prev + 1)}
+              >
+                {activeStep === 2 ? "確認へ" : "次へ"}
+              </button>
+            ) : (
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                onClick={handleSave}
+              >
+                保存する
+              </button>
+            )}
+          </div>
 
           </div>
   
@@ -267,6 +277,8 @@ console.log("selectedChildId:", selectedChildId);
               allowEventClick={activeStep === 2}
               onDateClick={handleDateClick}
               onEventClick={handleEventClick}
+              startDate={format(startOfNextMonth, "yyyy-MM-dd")}
+              endDate={format(new Date(endOfNextMonth.getFullYear(), endOfNextMonth.getMonth(), endOfNextMonth.getDate() + 1), "yyyy-MM-dd")}
             />
           </div>
         </div>

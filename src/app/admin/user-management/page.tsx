@@ -33,10 +33,10 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRoles, setExpandedRoles] = useState<{ [key: string]: boolean }>({
-    admin: true,
-    parent: true,
-    staff: true,
-    pending: true,
+    admin: false,
+    parent: false,
+    staff: false,
+    pending: false,
   });
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);

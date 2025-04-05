@@ -1,10 +1,11 @@
+"use client";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import { EventDropArg } from "@fullcalendar/core/index.js";
-import { EventClickArg } from "@fullcalendar/core/index.js";
-import { format } from "date-fns"; 
+import { EventDropArg, EventClickArg } from "@fullcalendar/core";
+import { format } from "date-fns";
 
 type Reservation = {
   id: string;
@@ -21,6 +22,8 @@ type Props = {
   onDateClick?: (info: DateClickArg) => void;
   onReservationMove?: (reservationId: string, newDateStr: string) => void;
   onEventClick?: (reservationId: string) => void;
+  startDate?: string; // 🔸 表示開始日
+  endDate?: string;   // 🔸 表示終了日
 };
 
 export default function ReservationCalendar({
@@ -31,6 +34,8 @@ export default function ReservationCalendar({
   onDateClick,
   onReservationMove,
   onEventClick,
+  startDate,
+  endDate,
 }: Props) {
   const [events, setEvents] = useState<any[]>([]);
 
@@ -44,7 +49,6 @@ export default function ReservationCalendar({
     setEvents(mapped);
   }, [reservations]);
 
-  // 🔁 日付比較用のヘルパー関数
   const isSameDay = (a: string | Date, b: string | Date) => {
     return format(new Date(a), "yyyy-MM-dd") === format(new Date(b), "yyyy-MM-dd");
   };
@@ -54,12 +58,15 @@ export default function ReservationCalendar({
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
+        initialDate={startDate ?? format(new Date(), "yyyy-MM-dd")} // 初期表示日
         locale="ja"
         events={events}
         editable={editable}
         height="auto"
-
-        // ✅ 日付クリック
+        validRange={{
+          start: startDate,
+          end: endDate,
+        }}
         dateClick={(info: DateClickArg) => {
           if (!allowClick || !onDateClick) return;
           const alreadyExists = reservations.some((r) => isSameDay(r.date, info.dateStr));
@@ -69,15 +76,10 @@ export default function ReservationCalendar({
           }
           onDateClick(info);
         }}
-        
-
-        // ✅ イベントクリック
         eventClick={(info: EventClickArg) => {
           if (!allowEventClick || !onEventClick) return;
           onEventClick(info.event.id);
         }}
-
-        // ✅ ドラッグ移動
         eventDrop={(info: EventDropArg) => {
           if (!editable || !onReservationMove) {
             info.revert();
@@ -99,11 +101,8 @@ export default function ReservationCalendar({
 
           onReservationMove(reservationId, format(targetDate, "yyyy-MM-dd"));
         }}
-
-        // ✅ eventAllow：事前にブロック
         eventAllow={(dropInfo, draggedEvent) => {
           if (!editable || !draggedEvent) return false;
-
           const targetDate = dropInfo.start;
           const reservationId = draggedEvent.id;
 
