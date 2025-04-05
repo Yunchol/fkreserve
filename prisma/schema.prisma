@@ -40,9 +40,28 @@ model Reservation {
   id        String   @id @default(cuid())
   date      DateTime
   type      String   // "basic" | "spot"
-  options   Json  // 後で
+  options   Option[] // 🔁 1対多に変更
   child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
   childId   String
   createdAt DateTime @default(now())
+}
+
+model Option {
+  id            String   @id @default(cuid())
+  type          String   // "lunch" | "dinner" | "school_car" | "home_car" | "lesson_car"
+  count         Int      // 回数（1日1回 or 習い事送迎は複数回）
+  time          String?  // お迎え時間（例: "17:15"）
+  lessonName    String?  // 習い事名（必要なときだけ）
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationId String
+}
+
+model BillingSetting {
+  id                String   @id @default(cuid())
+  effectiveFrom     DateTime // この設定が有効になる年月
+  basicPrices       Json     // { "1": 50000, "2": 55000, "3": 60000, ... }
+  spotPrices        Json     // { "morning": 4000, "afternoon": 6000, "full": 8000 }
+  optionPrices      Json     // { "lunch": 600, "dinner": 600, "school_car": 500, ... }
+  createdAt         DateTime @default(now())
 }
 
