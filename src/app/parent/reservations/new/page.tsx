@@ -12,6 +12,7 @@ import { Reservation } from "@/types/reservation";
 import { DateClickArg } from "@fullcalendar/interaction";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { postReservations, deleteNextMonthReservations } from "@/lib/api/reservation";
 
 // UIレイアウトを左右分割に変更
 export default function NewReservationPage() {
@@ -90,17 +91,11 @@ export default function NewReservationPage() {
     const generateBaseEvents = () => {
       const newEvents: Reservation[] = [];
   
-      // 来月の1日
       const startOfMonth = new Date();
       startOfMonth.setMonth(startOfMonth.getMonth() + 1);
       startOfMonth.setDate(1);
   
-      // 来月の末日
-      const endOfMonth = new Date(
-        startOfMonth.getFullYear(),
-        startOfMonth.getMonth() + 1,
-        0
-      );
+      const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
   
       for (
         let date = new Date(startOfMonth);
@@ -108,16 +103,14 @@ export default function NewReservationPage() {
         date.setDate(date.getDate() + 1)
       ) {
         const dayName = date.toLocaleDateString("ja-JP", { weekday: "long" });
-        const formattedDate = date.toISOString().split("T")[0];
+        const formattedDate = format(date, "yyyy-MM-dd");
   
-        // 選択された曜日だけを追加
         if (selectedDays[dayName]) {
-          const existingEvent = calendarEvents.find(
+          const existing = calendarEvents.find(
             (e) => e.date === formattedDate && e.type === "basic"
           );
   
-          // すでに登録済 or options付きイベントならスキップ
-          if (!existingEvent || (existingEvent && existingEvent.options.length === 0)) {
+          if (!existing || existing.options.length === 0) {
             newEvents.push({
               id: `basic-${formattedDate}`,
               date: formattedDate,
@@ -128,7 +121,6 @@ export default function NewReservationPage() {
         }
       }
   
-      // options が空の basic イベントは置き換える（編集済みは維持）
       setCalendarEvents((prev) => [
         ...prev.filter((e) => !(e.type === "basic" && e.options.length === 0)),
         ...newEvents,
@@ -138,6 +130,48 @@ export default function NewReservationPage() {
     generateBaseEvents();
   }, [selectedDays]);
   
+  
+
+  const handleSave = async () => {
+    if (!selectedChildId) {
+      alert("お子さまが選択されていません");
+      return;
+    }
+
+    // ① 来月の年月 (例: "2025-05")
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthStr = format(nextMonth, 'yyyy-MM'); // UTCではなくローカルタイムでフォーマット
+
+    try {
+      // ② 既存予約の削除（来月分）
+      await deleteNextMonthReservations(selectedChildId, nextMonthStr);
+
+      // ③ 保存対象データを抽出（来月分のみ）
+      const toSave = calendarEvents.filter((r) =>
+        r.date.startsWith(nextMonthStr)
+      );
+
+      if (toSave.length === 0) {
+        alert("来月の予約が1件もありません。");
+        return;
+      }
+
+      // ④ 予約を一括登録
+      await postReservations(selectedChildId, toSave);
+
+      alert("予約を保存しました！");
+    } catch (err) {
+      console.error("保存エラー", err);
+      alert("保存に失敗しました。");
+    }
+  };
+
+  console.log("selectedDays:", selectedDays);
+console.log("spotDays:", spotDays);
+console.log("calendarEvents:", calendarEvents);
+console.log("selectedChildId:", selectedChildId);
+
   
 
   return (
@@ -193,27 +227,35 @@ export default function NewReservationPage() {
             )}
   
            {/* ナビボタン */}
-            <div className="flex justify-between items-center pt-4">
-              {/* 中止ボタン */}
-              <button
-                className="text-red-600 hover:underline"
-                onClick={() => {
-                  if (confirm("ステップを中止して、最初の画面に戻りますか？")) {
-                    router.push("/parent/reservations"); // ← リダイレクト先
-                  }
-                }}
-              >
-                中止してやり直す
-              </button>
+           <div className="flex justify-between items-center pt-4">
+  <button
+    className="text-red-600 hover:underline"
+    onClick={() => {
+      if (confirm("ステップを中止して、最初の画面に戻りますか？")) {
+        router.push("/parent/reservations");
+      }
+    }}
+  >
+    中止してやり直す
+  </button>
 
-              {/* 次へボタンのみ（戻るなし） */}
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                onClick={() => setActiveStep((prev) => (prev < 3 ? prev + 1 : prev))}
-              >
-                {activeStep === 2 ? "確認へ" : "次へ"}
-              </button>
-            </div>
+  {activeStep < 3 ? (
+    <button
+      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      onClick={() => setActiveStep((prev) => prev + 1)}
+    >
+      {activeStep === 2 ? "確認へ" : "次へ"}
+    </button>
+  ) : (
+    <button
+      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+      onClick={handleSave}
+    >
+      保存する
+    </button>
+  )}
+</div>
+
           </div>
   
           {/* 右カラム：カレンダー（大きく表示） */}
@@ -245,3 +287,6 @@ export default function NewReservationPage() {
   );
   
 }
+
+//新規作成のロジックもう一度考える
+//api連携が少し複雑になってきた
