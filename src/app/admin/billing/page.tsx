@@ -1,24 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { format } from "date-fns";
+import {  useState } from "react";
+
+type BillingEntry = {
+  id: string;
+  name: string;
+  total: number | null;
+  confirmed: boolean;
+};
 
 export default function BillingPage() {
-  const [selectedMonth, setSelectedMonth] = useState(() =>
-    format(new Date(), "yyyy-MM")
-  );
+  const [selectedMonth, setSelectedMonth] = useState("");
   const [searchName, setSearchName] = useState("");
+  const [billingList, setBillingList] = useState<BillingEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 仮データ
-  const dummyChildren = [
-    { id: "1", name: "さくらちゃん", total: 75800 },
-    { id: "2", name: "たろうくん", total: 64000 },
-    { id: "3", name: "はなこちゃん", total: 87000 },
-  ];
+  const isSearchDisabled = !selectedMonth && !searchName;
 
-  const filtered = dummyChildren.filter((child) =>
-    child.name.includes(searchName)
-  );
+  const handleSearch = async () => {
+    if (isSearchDisabled) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (selectedMonth) params.append("month", selectedMonth);
+      if (searchName) params.append("name", searchName);
+
+      const res = await fetch(`/api/admin/billing?${params.toString()}`);
+      if (!res.ok) throw new Error("データ取得に失敗しました");
+
+      const data = await res.json();
+      setBillingList(data);
+    } catch (err) {
+      setError("一覧の取得に失敗しました");
+      setBillingList([]);
+    } finally {
+      setLoading(false);
+    }
+    console.log(selectedMonth)
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -47,29 +70,59 @@ export default function BillingPage() {
         />
       </div>
 
-      {/* 🔹 請求リスト（仮） */}
+      {/* 🔹 検索ボタン */}
+      <div>
+        <button
+          onClick={handleSearch}
+          disabled={isSearchDisabled}
+          className={`px-4 py-2 rounded ${
+            isSearchDisabled
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          検索する
+        </button>
+      </div>
+
+      {/* 🔹 エラー表示 */}
+      {error && <p className="text-red-600">{error}</p>}
+
+      {/* 🔹 請求リスト */}
       <div className="mt-6">
-        <h2 className="text-lg font-semibold mb-2">請求一覧（{selectedMonth}）</h2>
-        {filtered.length === 0 ? (
-          <p>該当する子どもがいません</p>
+        <h2 className="text-lg font-semibold mb-2">
+          検索結果（{selectedMonth || "全期間"})
+        </h2>
+        {loading ? (
+          <p>読み込み中...</p>
+        ) : billingList.length === 0 ? (
+          <p>該当する請求が見つかりませんでした</p>
         ) : (
           <table className="w-full border border-gray-300 text-sm">
             <thead>
               <tr className="bg-gray-100">
                 <th className="border px-4 py-2 text-left">名前</th>
                 <th className="border px-4 py-2 text-right">合計金額</th>
+                <th className="border px-4 py-2 text-center">状態</th>
                 <th className="border px-4 py-2 text-center">操作</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((child) => (
+              {billingList.map((child) => (
                 <tr key={child.id}>
                   <td className="border px-4 py-2">{child.name}</td>
                   <td className="border px-4 py-2 text-right">
-                    ¥{child.total.toLocaleString()}
+                    {child.confirmed && child.total !== null
+                      ? `¥${child.total.toLocaleString()}`
+                      : "―"}
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    <button className="text-blue-600 hover:underline text-sm">詳細</button>
+                    {child.confirmed ? "✅ 確定済み" : "⏳ 未確定"}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
+                    <button className="text-blue-600 hover:underline text-sm">
+                      詳細
+                    </button>
                   </td>
                 </tr>
               ))}
