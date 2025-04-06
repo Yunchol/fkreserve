@@ -8,7 +8,7 @@ import Step1 from "@/components/Step1";
 import Step2 from "@/components/Step2";
 import Step3 from "@/components/Step3";
 import ReservationModal from "@/components/ReservationModal";
-import { Reservation } from "@/types/reservation";
+import { Reservation, ReservationOption } from "@/types/reservation";
 import { DateClickArg } from "@fullcalendar/interaction";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -46,6 +46,7 @@ export default function NewReservationPage() {
       0
     );
 
+
   useEffect(() => {
     const fetchReservations = async () => {
       const res = await fetch("/api/parent/reservations");
@@ -76,9 +77,18 @@ export default function NewReservationPage() {
           id: `spot-${clickedDate}`,
           date: clickedDate,
           type: "spot",
-          options: [],
-        },
+          options: {
+            lunch: false,
+            dinner: false,
+            car: {
+              schoolCar: { enabled: false, count: 0, time: "" },
+              homeCar: { enabled: false, count: 0, time: "" },
+              lessonCar: { enabled: false, count: 0, name: "", time: "" },
+            }
+          }
+        }
       ]);
+      
     }
   };
 
@@ -89,11 +99,15 @@ export default function NewReservationPage() {
 
   const handleModalClose = () => setEditingReservation(null);
 
-  const handleModalSubmit = (type: "basic" | "spot", options: string[]) => {
+  const handleModalSubmit = (type: "basic" | "spot", options: ReservationOption) => {
     if (!editingReservation) return;
+  
     setCalendarEvents((prev) =>
-      prev.map((r) => (r.id === editingReservation.id ? { ...r, options } : r))
+      prev.map((r) =>
+        r.id === editingReservation.id ? { ...r, options } : r
+      )
     );
+  
     handleModalClose();
   };
 
@@ -106,6 +120,15 @@ export default function NewReservationPage() {
       startOfMonth.setDate(1);
   
       const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
+
+          // ✅ OK: 例えば lunch, dinner, car に一つでも true があるかをチェック
+      const isEmptyOptions = (options: Reservation["options"]) =>
+        !options.lunch &&
+        !options.dinner &&
+        !options.car.schoolCar.enabled &&
+        !options.car.homeCar.enabled &&
+        !options.car.lessonCar.enabled;
+      
   
       for (
         let date = new Date(startOfMonth);
@@ -120,21 +143,31 @@ export default function NewReservationPage() {
             (e) => e.date === formattedDate && e.type === "basic"
           );
   
-          if (!existing || existing.options.length === 0) {
+          if (!existing || isEmptyOptions(existing.options)) {
             newEvents.push({
               id: `basic-${formattedDate}`,
               date: formattedDate,
               type: "basic",
-              options: [],
+              // ✅ OK: ReservationOption 型に合わせる
+              options: {
+                lunch: false,
+                dinner: false,
+                car: {
+                  schoolCar: { enabled: false, count: 0, time: "" },
+                  homeCar: { enabled: false, count: 0, time: "" },
+                  lessonCar: { enabled: false, count: 0, name: "", time: "" },
+                }
+              }
             });
           }
         }
       }
   
       setCalendarEvents((prev) => [
-        ...prev.filter((e) => !(e.type === "basic" && e.options.length === 0)),
+        ...prev.filter((e) => !(e.type === "basic" && isEmptyOptions(e.options))),
         ...newEvents,
       ]);
+      
     };
   
     generateBaseEvents();

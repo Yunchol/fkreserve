@@ -41,14 +41,32 @@ export default function ReservationPage() {
 
   useEffect(() => {
     if (!selectedChild) return;
-    const mapped = selectedChild.reservations.map((res) => ({
-      id: res.id,
-      title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${res.options.join("・")}`,
-      start: res.date,
-      allDay: true,
-    }));
+  
+    const mapped = selectedChild.reservations.map((res) => {
+      const opts = res.options as any;
+  
+      const parts: string[] = [];
+      if (opts?.lunch) parts.push("昼食");
+      if (opts?.dinner) parts.push("夕食");
+  
+      if (opts?.car?.schoolCar?.enabled) parts.push(`学校送迎(${opts.car.schoolCar.count}回)`);
+      if (opts?.car?.homeCar?.enabled) parts.push(`自宅送迎(${opts.car.homeCar.count}回)`);
+      if (opts?.car?.lessonCar?.enabled) {
+        const name = opts.car.lessonCar.name || "習い事";
+        parts.push(`${name}送迎(${opts.car.lessonCar.count}回)`);
+      }
+  
+      return {
+        id: res.id,
+        title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${parts.join("・")}`,
+        start: res.date,
+        allDay: true,
+      };
+    });
+  
     setEvents(mapped);
   }, [selectedChild]);
+  
 
   return (
     <div className="p-4">

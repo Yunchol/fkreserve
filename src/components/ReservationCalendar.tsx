@@ -4,15 +4,9 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import { EventDropArg, EventClickArg } from "@fullcalendar/core";
+// import { EventDropArg, EventClickArg } from "@fullcalendar/core";
 import { format } from "date-fns";
-
-type Reservation = {
-  id: string;
-  date: string;
-  type: string;
-  options: string[];
-};
+import { Reservation, ReservationOption } from "@/types/reservation";
 
 type Props = {
   reservations: Reservation[];
@@ -22,7 +16,7 @@ type Props = {
   onDateClick?: (info: DateClickArg) => void;
   onReservationMove?: (reservationId: string, newDateStr: string) => void;
   onEventClick?: (reservationId: string) => void;
-  mode?: "new" | "edit"; // 🔸 追加
+  mode?: "new" | "edit";
 };
 
 export default function ReservationCalendar({
@@ -33,25 +27,42 @@ export default function ReservationCalendar({
   onDateClick,
   onReservationMove,
   onEventClick,
-  mode = "new", // 🔸 デフォルトは "new"
+  mode = "new",
 }: Props) {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    const mapped = reservations.map((res) => ({
-      id: res.id,
-      title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${res.options.join("・")}`,
-      start: res.date,
-      allDay: true,
-    }));
+    const mapped = reservations.map((res) => {
+      const opts = res.options as ReservationOption;
+
+      const parts: string[] = [];
+
+      if (opts?.lunch) parts.push("昼食");
+      if (opts?.dinner) parts.push("夕食");
+
+      if (opts?.car?.schoolCar?.enabled)
+        parts.push(`学校送迎(${opts.car.schoolCar.count}回)`);
+      if (opts?.car?.homeCar?.enabled)
+        parts.push(`自宅送迎(${opts.car.homeCar.count}回)`);
+      if (opts?.car?.lessonCar?.enabled) {
+        const name = opts.car.lessonCar.name || "習い事";
+        parts.push(`${name}送迎(${opts.car.lessonCar.count}回)`);
+      }
+
+      return {
+        id: res.id,
+        title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${parts.join("・")}`,
+        start: res.date,
+        allDay: true,
+      };
+    });
+
     setEvents(mapped);
   }, [reservations]);
 
-  const isSameDay = (a: string | Date, b: string | Date) => {
-    return format(new Date(a), "yyyy-MM-dd") === format(new Date(b), "yyyy-MM-dd");
-  };
+  const isSameDay = (a: string | Date, b: string | Date) =>
+    format(new Date(a), "yyyy-MM-dd") === format(new Date(b), "yyyy-MM-dd");
 
-  // 🔸 カレンダー範囲の自動設定
   const today = new Date();
   const firstDayNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   const lastDayNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
@@ -69,11 +80,8 @@ export default function ReservationCalendar({
         events={events}
         editable={editable}
         height="auto"
-        validRange={{
-          start: calendarStart,
-          end: calendarEnd,
-        }}
-        dateClick={(info: DateClickArg) => {
+        validRange={{ start: calendarStart, end: calendarEnd }}
+        dateClick={(info) => {
           if (!allowClick || !onDateClick) return;
           const alreadyExists = reservations.some((r) => isSameDay(r.date, info.dateStr));
           if (alreadyExists) {
@@ -82,11 +90,11 @@ export default function ReservationCalendar({
           }
           onDateClick(info);
         }}
-        eventClick={(info: EventClickArg) => {
+        eventClick={(info) => {
           if (!allowEventClick || !onEventClick) return;
           onEventClick(info.event.id);
         }}
-        eventDrop={(info: EventDropArg) => {
+        eventDrop={(info) => {
           if (!editable || !onReservationMove) {
             info.revert();
             return;
@@ -112,11 +120,9 @@ export default function ReservationCalendar({
           const targetDate = dropInfo.start;
           const reservationId = draggedEvent.id;
 
-          const isDuplicate = reservations.some(
+          return !reservations.some(
             (r) => isSameDay(r.date, targetDate) && r.id !== reservationId
           );
-
-          return !isDuplicate;
         }}
       />
     </div>

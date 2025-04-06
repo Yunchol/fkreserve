@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Reservation } from "@/types/reservation";
+import { Reservation, ReservationOption } from "@/types/reservation";
 
 type Props = {
   date: string;
   editingReservation?: Reservation | null;
   onClose: () => void;
-  onSubmit: (type: "basic" | "spot", options: string[]) => void;
+  onSubmit: (type: "basic" | "spot", options: ReservationOption) => void;
   onDelete?: (reservationId: string) => void;
 };
 
-const AVAILABLE_OPTIONS = ["おやつ", "昼食", "夕食", "送迎"];
+
+// 🔸送迎キーを定義
+const CAR_KEYS = ["schoolCar", "homeCar", "lessonCar"] as const;
 
 export default function ReservationModal({
   date,
@@ -20,21 +22,32 @@ export default function ReservationModal({
   onSubmit,
   onDelete,
 }: Props) {
-  const [type] = useState<"spot">("spot"); // ← type を spot で固定
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [type] = useState<"spot">("spot"); // 固定
+  const [lunch, setLunch] = useState(false);
+  const [dinner, setDinner] = useState(false);
+
+  const [carOptions, setCarOptions] = useState<ReservationOption["car"]>({
+    schoolCar: { enabled: false, count: 1, time: "" },
+    homeCar: { enabled: false, count: 1, time: "" },
+    lessonCar: { enabled: false, count: 1, name: "", time: "" },
+  });
+  
 
   useEffect(() => {
     if (editingReservation) {
-      setSelectedOptions(editingReservation.options);
+      const opts = editingReservation.options as any;
+      setLunch(!!opts?.lunch);
+      setDinner(!!opts?.dinner);
+      if (opts?.car) setCarOptions(opts.car);
     }
   }, [editingReservation]);
 
-  const toggleOption = (opt: string) => {
-    setSelectedOptions((prev) =>
-      prev.includes(opt)
-        ? prev.filter((o) => o !== opt)
-        : [...prev, opt]
-    );
+  const handleSubmit = () => {
+    onSubmit(type, {
+      lunch,
+      dinner,
+      car: carOptions,
+    });
   };
 
   return (
@@ -44,7 +57,7 @@ export default function ReservationModal({
           {date} の{editingReservation ? "予約編集" : "新規予約"}
         </h2>
 
-        {/* 利用タイプ（固定で表示だけ） */}
+        {/* 利用タイプ（スポット固定） */}
         <div>
           <label className="block mb-1 font-medium">利用タイプ</label>
           <input
@@ -55,25 +68,113 @@ export default function ReservationModal({
           />
         </div>
 
-        {/* オプション選択 */}
+        {/* 昼食・夕食 */}
         <div>
-          <label className="block mb-1 font-medium">オプション</label>
-          <div className="space-y-1">
-            {AVAILABLE_OPTIONS.map((opt) => (
-              <label key={opt} className="block text-sm">
-                <input
-                  type="checkbox"
-                  checked={selectedOptions.includes(opt)}
-                  onChange={() => toggleOption(opt)}
-                  className="mr-2"
-                />
-                {opt}
-              </label>
-            ))}
-          </div>
+          <label className="block font-medium mb-1">オプション（食事）</label>
+          <label className="block text-sm">
+            <input
+              type="checkbox"
+              checked={lunch}
+              onChange={() => setLunch((prev) => !prev)}
+              className="mr-2"
+            />
+            昼食（600円）
+          </label>
+          <label className="block text-sm">
+            <input
+              type="checkbox"
+              checked={dinner}
+              onChange={() => setDinner((prev) => !prev)}
+              className="mr-2"
+            />
+            夕食（600円）
+          </label>
         </div>
 
-        {/* ボタン群 */}
+        {/* 送迎 */}
+        <div>
+          <label className="block font-medium mb-1">送迎オプション</label>
+          {CAR_KEYS.map((key) => {
+            const labelMap = {
+              schoolCar: "学校送迎（500円／回）",
+              homeCar: "自宅送迎（500円／回）",
+              lessonCar: "習い事送迎（500円／回）",
+            };
+
+            return (
+              <div key={key} className="border p-2 rounded mb-2">
+                <label className="block font-medium mb-1">
+                  <input
+                    type="checkbox"
+                    checked={carOptions[key].enabled}
+                    onChange={(e) =>
+                      setCarOptions((prev) => ({
+                        ...prev,
+                        [key]: { ...prev[key], enabled: e.target.checked },
+                      }))
+                    }
+                    className="mr-2"
+                  />
+                  {labelMap[key]}
+                </label>
+
+                {carOptions[key].enabled && (
+                  <div className="space-y-2 mt-2 pl-4">
+                    <input
+                      type="number"
+                      min={1}
+                      value={carOptions[key].count}
+                      onChange={(e) =>
+                        setCarOptions((prev) => ({
+                          ...prev,
+                          [key]: {
+                            ...prev[key],
+                            count: parseInt(e.target.value, 10) || 1,
+                          },
+                        }))
+                      }
+                      className="w-full border p-1 rounded"
+                      placeholder="回数"
+                    />
+                    {key === "lessonCar" && (
+                      <input
+                        type="text"
+                        value={carOptions.lessonCar.name}
+                        onChange={(e) =>
+                          setCarOptions((prev) => ({
+                            ...prev,
+                            lessonCar: {
+                              ...prev.lessonCar,
+                              name: e.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full border p-1 rounded"
+                        placeholder="習い事名"
+                      />
+                    )}
+                    <input
+                      type="time"
+                      value={carOptions[key].time}
+                      onChange={(e) =>
+                        setCarOptions((prev) => ({
+                          ...prev,
+                          [key]: {
+                            ...prev[key],
+                            time: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full border p-1 rounded"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ボタン */}
         <div className="flex justify-between items-center pt-4">
           {editingReservation && onDelete && (
             <button
@@ -88,7 +189,7 @@ export default function ReservationModal({
               キャンセル
             </button>
             <button
-              onClick={() => onSubmit(type, selectedOptions)}
+              onClick={handleSubmit}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               {editingReservation ? "更新する" : "予約する"}

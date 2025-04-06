@@ -39,10 +39,9 @@ export async function POST(req: Request) {
 
     const userId = payload.userId;
     const body = await req.json();
-
     const { childId, date, type, options, reservations } = body;
 
-    // ✅ 子ども所有者チェック
+    // ✅ 子どもの所有者チェック
     const child = await prisma.child.findUnique({ where: { id: childId } });
     if (!child || child.parentId !== userId) {
       return NextResponse.json({ error: "不正な子どもID" }, { status: 403 });
@@ -50,18 +49,31 @@ export async function POST(req: Request) {
 
     // ✅ 一括登録
     if (Array.isArray(reservations)) {
-      const data = reservations.map((r) => ({
-        childId,
-        date: new Date(r.date),
-        type: r.type,
-        options: r.options,
-      }));
-      await prisma.reservation.createMany({ data });
+      await Promise.all(
+        reservations.map(async (r) => {
+          const reservation = await prisma.reservation.create({
+            data: {
+              childId,
+              date: new Date(r.date),
+              type: r.type,
+              options: {
+                create: r.options.map((opt: any) => ({
+                  type: opt.type,
+                  count: opt.count,
+                  time: opt.time || null,
+                  lessonName: opt.lessonName || null,
+                })),
+              },
+            },
+          });
+        })
+      );
+
       return NextResponse.json({ success: true });
     }
 
     // ✅ 単体登録
-    if (!date || !type) {
+    if (!date || !type || !Array.isArray(options)) {
       return NextResponse.json({ error: "パラメータ不足" }, { status: 400 });
     }
 
@@ -78,7 +90,14 @@ export async function POST(req: Request) {
         childId,
         date: new Date(date),
         type,
-        options,
+        options: {
+          create: options.map((opt: any) => ({
+            type: opt.type,
+            count: opt.count,
+            time: opt.time || null,
+            lessonName: opt.lessonName || null,
+          })),
+        },
       },
     });
 
