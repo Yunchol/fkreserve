@@ -45,7 +45,7 @@ export async function GET() {
   }
 }
 
-// ✅ POST: 単体 or 一括登録
+// ✅ POST: 単体 or 一括登録（BasicUsage付き）
 export async function POST(req: Request) {
   try {
     const token = (await cookies()).get("token")?.value;
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
     const userId = payload.userId;
     const body = await req.json();
-    const { childId, date, type, options, reservations } = body;
+    const { childId, date, type, options, reservations, basicUsage, month } = body;
 
     // ✅ 子どもの所有者チェック
     const child = await prisma.child.findUnique({ where: { id: childId } });
@@ -64,11 +64,46 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "不正な子どもID" }, { status: 403 });
     }
 
-    // ✅ 一括登録
+    // ✅ 一括登録（+ BasicUsage の保存）
     if (Array.isArray(reservations)) {
-      await Promise.all(
-        reservations.map(async (r) => {
-          const reservation = await prisma.reservation.create({
+      if (!month || !basicUsage) {
+        return NextResponse.json({ error: "月情報または利用プランが不足しています" }, { status: 400 });
+      }
+
+      // 一括トランザクションで保存（既存予約は削除 → 上書き）
+      await prisma.$transaction([
+        // ① 既存予約削除（同月）
+        prisma.reservation.deleteMany({
+          where: {
+            childId,
+            date: {
+              gte: new Date(`${month}-01`),
+              lt: new Date(`${month}-31`) // 仮：月末日（うるう年・末日は後で調整してもOK）
+            }
+          }
+        }),
+        // ② BasicUsage 上書き（upsert）
+        prisma.basicUsage.upsert({
+          where: {
+            childId_month: {
+              childId,
+              month
+            }
+          },
+          update: {
+            weeklyCount: basicUsage.weeklyCount,
+            weekdays: basicUsage.weekdays
+          },
+          create: {
+            childId,
+            month,
+            weeklyCount: basicUsage.weeklyCount,
+            weekdays: basicUsage.weekdays
+          }
+        }),
+        // ③ 新しい予約をすべて登録
+        ...reservations.map((r) =>
+          prisma.reservation.create({
             data: {
               childId,
               date: new Date(r.date),
@@ -79,12 +114,12 @@ export async function POST(req: Request) {
                   count: opt.count,
                   time: opt.time || null,
                   lessonName: opt.lessonName || null,
-                })),
-              },
-            },
-          });
-        })
-      );
+                }))
+              }
+            }
+          })
+        )
+      ]);
 
       return NextResponse.json({ success: true });
     }
@@ -124,6 +159,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
   }
 }
+
 
 export async function PATCH(req: Request) {
   try {

@@ -36,7 +36,7 @@ export default function UserManagementPage() {
     admin: false,
     parent: false,
     staff: false,
-    pending: false,
+    pending: true,
   });
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);

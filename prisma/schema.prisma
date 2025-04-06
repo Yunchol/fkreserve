@@ -34,6 +34,7 @@ model Child {
   parentId   String             // 外部キー（保護者ID）
   createdAt  DateTime @default(now())
   reservations Reservation[]
+  basicUsages   BasicUsage[] 
 }
 
 model Reservation {
@@ -44,6 +45,9 @@ model Reservation {
   child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
   childId   String
   createdAt DateTime @default(now())
+    // 🔍 よく検索される用のインデックス
+  @@index([date])
+  @@index([childId, date])
 }
 
 model Option {
@@ -56,12 +60,31 @@ model Option {
   reservationId String
 }
 
+
 model BillingSetting {
-  id                String   @id @default(cuid())
-  effectiveFrom     DateTime // この設定が有効になる年月
-  basicPrices       Json     // { "1": 50000, "2": 55000, "3": 60000, ... }
-  spotPrices        Json     // { "morning": 4000, "afternoon": 6000, "full": 8000 }
-  optionPrices      Json     // { "lunch": 600, "dinner": 600, "school_car": 500, ... }
-  createdAt         DateTime @default(now())
+  id           String   @id @default(cuid())
+  version      String   // 例: "2025春", "v1.2"
+  basicPrices  Json     // { "0": 0, "1": 50000, "2": 55000, ... }
+  spotPrices   Json     // { "morning": 4000, "afternoon": 5000, "full": 8000 }
+  optionPrices Json     // { "lunch": 600, "dinner": 600, "school_car": 500, ... }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
+model BasicUsage {
+  id          String   @id @default(cuid())
+  child       Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId     String
+  month       String   // "2025-04" などの形式（Date型ではなく文字列）
+  weeklyCount Int
+  weekdays    Json // 例: ["月曜日", "水曜日"]
+  createdAt   DateTime @default(now())
+
+  @@unique([childId, month]) // 子どもごとに月1つの記録
+}
+
+
+//👇その後にやると良いこと
+// 「Step1」の曜日・週利用回数を BasicUsage に保存する実装
+// 請求書生成時に、BasicUsage + Reservation を月ごとに読み込んで合計を出す
+// BillingSetting の適用ロジック（version選択 or 最新を自動使用）

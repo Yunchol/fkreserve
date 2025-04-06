@@ -26,6 +26,10 @@ export default function NewReservationPage() {
     木曜日: false,
     金曜日: false,
   });
+  const weekdays = Object.entries(selectedDays)
+  .filter(([, v]) => v)
+  .map(([day]) => day);
+
   const [spotDays, setSpotDays] = useState(0);
   const [spotSelectedDates, setSpotSelectedDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -180,29 +184,42 @@ export default function NewReservationPage() {
       alert("お子さまが選択されていません");
       return;
     }
-
-    // ① 来月の年月 (例: "2025-05")
+  
+    // 来月の年月を文字列で取得（例："2025-05"）
     const now = new Date();
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const nextMonthStr = format(nextMonth, 'yyyy-MM'); // UTCではなくローカルタイムでフォーマット
-
+    const nextMonthStr = format(nextMonth, "yyyy-MM");
+  
     try {
-      // ② 既存予約の削除（来月分）
+      // 来月分の予約を削除
       await deleteNextMonthReservations(selectedChildId, nextMonthStr);
-
-      // ③ 保存対象データを抽出（来月分のみ）
+  
+      // 来月の予約のみ抽出
       const toSave = calendarEvents.filter((r) =>
         r.date.startsWith(nextMonthStr)
       );
-
+  
       if (toSave.length === 0) {
         alert("来月の予約が1件もありません。");
         return;
       }
-
-      // ④ 予約を一括登録
-      await postReservations(selectedChildId, toSave);
-
+  
+      // ✅ 選択された曜日を配列に変換
+      const weekdays = Object.entries(selectedDays)
+        .filter(([, v]) => v)
+        .map(([day]) => day);
+  
+      // ✅ 保存リクエスト送信（予約＋BasicUsageまとめて）
+      await postReservations(
+        selectedChildId,
+        toSave,
+        {
+          weeklyCount: weeklyUsage,
+          weekdays,
+        },
+        nextMonthStr
+      );
+  
       alert("予約を保存しました！");
       router.push("/parent/reservations");
     } catch (err) {
@@ -210,6 +227,7 @@ export default function NewReservationPage() {
       alert("保存に失敗しました。");
     }
   };
+  
 
   console.log("selectedDays:", selectedDays);
   console.log("spotDays:", spotDays);

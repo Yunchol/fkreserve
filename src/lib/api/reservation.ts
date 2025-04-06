@@ -2,53 +2,6 @@
 import { ReservationOption } from "@/types/reservation";
 import { convertOptionsToArray } from "../utils/convertOption";
 
-// 🔁 ReservationOption を DB保存用 Option[] に変換
-// function convertOptionToArray(options: ReservationOption) {
-//   const result: {
-//     type: string;
-//     count: number;
-//     time?: string;
-//     lessonName?: string;
-//   }[] = [];
-
-//   if (options.lunch) {
-//     result.push({ type: "lunch", count: 1 });
-//   }
-
-//   if (options.dinner) {
-//     result.push({ type: "dinner", count: 1 });
-//   }
-
-//   const car = options.car;
-
-//   if (car.schoolCar.enabled) {
-//     result.push({
-//       type: "school_car",
-//       count: car.schoolCar.count,
-//       time: car.schoolCar.time,
-//     });
-//   }
-
-//   if (car.homeCar.enabled) {
-//     result.push({
-//       type: "home_car",
-//       count: car.homeCar.count,
-//       time: car.homeCar.time,
-//     });
-//   }
-
-//   if (car.lessonCar.enabled) {
-//     result.push({
-//       type: "lesson_car",
-//       count: car.lessonCar.count,
-//       time: car.lessonCar.time,
-//       lessonName: car.lessonCar.name,
-//     });
-//   }
-
-//   return result;
-// }
-
 // 🔸単体予約登録
 export async function postReservation({
   childId,
@@ -96,23 +49,31 @@ export const deleteNextMonthReservations = async (childId: string, month: string
   }
 };
 
-// 🔸一括登録
+
+// 🔸一括登録＋basicUsage付き
 export const postReservations = async (
   childId: string,
   reservations: {
     date: string;
     type: "basic" | "spot";
     options: ReservationOption;
-  }[]
+  }[],
+  basicUsage: {
+    weeklyCount: number;
+    weekdays: string[];
+  },
+  month: string
 ) => {
   const res = await fetch("/api/parent/reservations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       childId,
+      month,
+      basicUsage,
       reservations: reservations.map((r) => ({
         ...r,
-        options: convertOptionsToArray(r.options),
+        options: convertOptionsToArray(r.options), // ✅ Option[] に変換して送信
       })),
     }),
   });
@@ -123,3 +84,4 @@ export const postReservations = async (
 
   return res.json();
 };
+
