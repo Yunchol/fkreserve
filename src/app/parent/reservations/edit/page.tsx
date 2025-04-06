@@ -7,13 +7,7 @@ import ChildSelector from "@/components/ChildSelector";
 import { postReservation } from "@/lib/api/reservation";
 import ReservationModal from "@/components/ReservationModal";
 import { DateClickArg } from "@fullcalendar/interaction";
-
-type Reservation = {
-  id: string;
-  date: string;
-  type: string;
-  options: string[];
-};
+import { Reservation, ReservationOption } from "@/types/reservation"; // 型をインポート
 
 type Child = {
   id: string;
@@ -55,7 +49,7 @@ export default function CalendarEditPage() {
 
   const handleReservationSubmit = async (
     type: "basic" | "spot",
-    options: string[]
+    options: ReservationOption
   ) => {
     if (!selectedChildId) return;
 
@@ -92,13 +86,13 @@ export default function CalendarEditPage() {
         alert("更新エラー");
       }
     } else {
-      // 新規スポット予約の追加
+      // 新規予約の追加
       if (!selectedDate) return;
       try {
         await postReservation({
           childId: selectedChildId,
           date: selectedDate,
-          type, // UI上では "spot" 固定で渡る
+          type, // UI上では "spot" 固定で渡る場合もあります
           options,
         });
 
@@ -169,17 +163,16 @@ export default function CalendarEditPage() {
       <ChildSelector children={children} />
       <h1 className="text-xl font-semibold mb-4">予約カレンダー（編集）</h1>
       {selectedChild ? (
-       <ReservationCalendar
-       reservations={selectedChild.reservations}
-       editable
-       allowClick
-       allowEventClick
-       mode="edit" // ← 追加！
-       onDateClick={handleDateClick}
-       onReservationMove={handleReservationMove}
-       onEventClick={handleEventClick}
-     />
-     
+        <ReservationCalendar
+          reservations={selectedChild.reservations}
+          editable
+          allowClick
+          allowEventClick
+          mode="edit" // 編集モード指定
+          onDateClick={handleDateClick}
+          onReservationMove={handleReservationMove}
+          onEventClick={handleEventClick}
+        />
       ) : (
         <p>子どもを選択してください</p>
       )}

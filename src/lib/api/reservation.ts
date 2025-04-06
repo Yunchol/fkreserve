@@ -1,52 +1,53 @@
 // lib/api/reservation.ts
 import { ReservationOption } from "@/types/reservation";
+import { convertOptionsToArray } from "../utils/convertOption";
 
 // 🔁 ReservationOption を DB保存用 Option[] に変換
-function convertOptionToArray(options: ReservationOption) {
-  const result: {
-    type: string;
-    count: number;
-    time?: string;
-    lessonName?: string;
-  }[] = [];
+// function convertOptionToArray(options: ReservationOption) {
+//   const result: {
+//     type: string;
+//     count: number;
+//     time?: string;
+//     lessonName?: string;
+//   }[] = [];
 
-  if (options.lunch) {
-    result.push({ type: "lunch", count: 1 });
-  }
+//   if (options.lunch) {
+//     result.push({ type: "lunch", count: 1 });
+//   }
 
-  if (options.dinner) {
-    result.push({ type: "dinner", count: 1 });
-  }
+//   if (options.dinner) {
+//     result.push({ type: "dinner", count: 1 });
+//   }
 
-  const car = options.car;
+//   const car = options.car;
 
-  if (car.schoolCar.enabled) {
-    result.push({
-      type: "school_car",
-      count: car.schoolCar.count,
-      time: car.schoolCar.time,
-    });
-  }
+//   if (car.schoolCar.enabled) {
+//     result.push({
+//       type: "school_car",
+//       count: car.schoolCar.count,
+//       time: car.schoolCar.time,
+//     });
+//   }
 
-  if (car.homeCar.enabled) {
-    result.push({
-      type: "home_car",
-      count: car.homeCar.count,
-      time: car.homeCar.time,
-    });
-  }
+//   if (car.homeCar.enabled) {
+//     result.push({
+//       type: "home_car",
+//       count: car.homeCar.count,
+//       time: car.homeCar.time,
+//     });
+//   }
 
-  if (car.lessonCar.enabled) {
-    result.push({
-      type: "lesson_car",
-      count: car.lessonCar.count,
-      time: car.lessonCar.time,
-      lessonName: car.lessonCar.name,
-    });
-  }
+//   if (car.lessonCar.enabled) {
+//     result.push({
+//       type: "lesson_car",
+//       count: car.lessonCar.count,
+//       time: car.lessonCar.time,
+//       lessonName: car.lessonCar.name,
+//     });
+//   }
 
-  return result;
-}
+//   return result;
+// }
 
 // 🔸単体予約登録
 export async function postReservation({
@@ -67,7 +68,7 @@ export async function postReservation({
       childId,
       date,
       type,
-      options: convertOptionToArray(options),
+      options: convertOptionsToArray(options),
     }),
   });
 
@@ -111,7 +112,7 @@ export const postReservations = async (
       childId,
       reservations: reservations.map((r) => ({
         ...r,
-        options: convertOptionToArray(r.options),
+        options: convertOptionsToArray(r.options),
       })),
     }),
   });

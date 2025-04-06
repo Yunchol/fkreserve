@@ -4,17 +4,10 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
 import { useChildStore } from "@/stores/childStore";
 import ChildSelector from "@/components/ChildSelector";
 import { useRouter } from "next/navigation"; 
-
-type Reservation = {
-  id: string;
-  date: string;
-  type: string;
-  options: string[];
-};
+import { Reservation, ReservationOption } from "@/types/reservation"; // 型定義をインポート
 
 type Child = {
   id: string;
@@ -39,34 +32,46 @@ export default function ReservationPage() {
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
-  useEffect(() => {
-    if (!selectedChild) return;
-  
-    const mapped = selectedChild.reservations.map((res) => {
-      const opts = res.options as any;
-  
-      const parts: string[] = [];
-      if (opts?.lunch) parts.push("昼食");
-      if (opts?.dinner) parts.push("夕食");
-  
-      if (opts?.car?.schoolCar?.enabled) parts.push(`学校送迎(${opts.car.schoolCar.count}回)`);
-      if (opts?.car?.homeCar?.enabled) parts.push(`自宅送迎(${opts.car.homeCar.count}回)`);
-      if (opts?.car?.lessonCar?.enabled) {
-        const name = opts.car.lessonCar.name || "習い事";
-        parts.push(`${name}送迎(${opts.car.lessonCar.count}回)`);
-      }
-  
-      return {
-        id: res.id,
-        title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${parts.join("・")}`,
-        start: res.date,
-        allDay: true,
-      };
-    });
-  
-    setEvents(mapped);
-  }, [selectedChild]);
-  
+ // イベントデータのマッピング部分
+useEffect(() => {
+  if (!selectedChild) return;
+
+  const mapped = selectedChild.reservations.map((res) => {
+    // options が undefined の場合はデフォルト値を使用
+    const opts: ReservationOption = res.options ?? {
+      lunch: false,
+      dinner: false,
+      car: {
+        schoolCar: { enabled: false, count: 0, time: "" },
+        homeCar: { enabled: false, count: 0, time: "" },
+        lessonCar: { enabled: false, count: 0, name: "", time: "" },
+      },
+    };
+
+    const parts: string[] = [];
+    if (opts.lunch) parts.push("昼食");
+    if (opts.dinner) parts.push("夕食");
+
+    if (opts.car.schoolCar.enabled)
+      parts.push(`学校送迎(${opts.car.schoolCar.count}回)`);
+    if (opts.car.homeCar.enabled)
+      parts.push(`自宅送迎(${opts.car.homeCar.count}回)`);
+    if (opts.car.lessonCar.enabled) {
+      const name = opts.car.lessonCar.name || "習い事";
+      parts.push(`${name}送迎(${opts.car.lessonCar.count}回)`);
+    }
+
+    return {
+      id: res.id,
+      title: `${res.type === "basic" ? "基本" : "スポット"}利用<br />${parts.join("<br />")}`,
+      start: res.date,
+      allDay: true,
+    };
+  });
+
+  setEvents(mapped);
+}, [selectedChild]);
+
 
   return (
     <div className="p-4">
@@ -102,6 +107,11 @@ export default function ReservationPage() {
             editable={false}
             selectable={false}
             height="auto"
+            eventContent={(arg) => {
+              return {
+                html: `<div style="white-space: normal; font-size: 0.85rem;">${arg.event.title}</div>`,
+              };
+            }}
           />
         </div>
       ) : (
@@ -109,4 +119,4 @@ export default function ReservationPage() {
       )}
     </div>
   );
-} 
+}

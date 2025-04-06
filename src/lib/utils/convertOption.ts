@@ -1,6 +1,6 @@
 import { ReservationOption } from "@/types/reservation";
 
-function convertOptionsToArray(opt: ReservationOption) {
+export function convertOptionsToArray(opt: ReservationOption) {
     const options = [];
   
     if (opt.lunch) {
@@ -40,4 +40,38 @@ function convertOptionsToArray(opt: ReservationOption) {
   
     return options;
   }
-  
+
+export function convertArrayToOptions(optionsArray: any[]): ReservationOption {
+  const result: ReservationOption = {
+    lunch: false,
+    dinner: false,
+    car: {
+      schoolCar: { enabled: false, count: 0, time: "" },
+      homeCar: { enabled: false, count: 0, time: "" },
+      lessonCar: { enabled: false, count: 0, name: "", time: "" },
+    },
+  };
+
+  optionsArray.forEach(opt => {
+    if (opt.type === "lunch") {
+      result.lunch = true;
+    } else if (opt.type === "dinner") {
+      result.dinner = true;
+    } else if (opt.type === "school_car") {
+      result.car.schoolCar.enabled = true;
+      result.car.schoolCar.count = opt.count;
+      result.car.schoolCar.time = opt.time;
+    } else if (opt.type === "home_car") {
+      result.car.homeCar.enabled = true;
+      result.car.homeCar.count = opt.count;
+      result.car.homeCar.time = opt.time;
+    } else if (opt.type === "lesson_car") {
+      result.car.lessonCar.enabled = true;
+      result.car.lessonCar.count = opt.count;
+      result.car.lessonCar.time = opt.time;
+      result.car.lessonCar.name = opt.lessonName;
+    }
+  });
+
+  return result;
+}

@@ -2,26 +2,43 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ReservationOption } from "@/types/reservation";
+import { convertArrayToOptions, convertOptionsToArray } from "@/lib/utils/convertOption"; 
 
-// ✅ GET: 予約一覧取得（親の子どもと予約すべて）
+// GET: 予約一覧取得（親の子どもと予約すべて）
 export async function GET() {
   try {
     const token = (await cookies()).get("token")?.value;
-    if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
+    if (!token)
+      return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 
     const payload = verifyToken(token);
-    if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
+    if (!payload)
+      return NextResponse.json({ error: "認証エラー" }, { status: 401 });
 
     const userId = payload.userId;
 
+    // options リレーションも含める
     const childrenWithReservations = await prisma.child.findMany({
       where: { parentId: userId },
       include: {
-        reservations: { orderBy: { date: "asc" } },
+        reservations: {
+          orderBy: { date: "asc" },
+          include: { options: true },
+        },
       },
     });
 
-    return NextResponse.json({ children: childrenWithReservations });
+    // 各予約の options を配列から ReservationOption 型へ変換
+    const transformed = childrenWithReservations.map(child => ({
+      ...child,
+      reservations: child.reservations.map(reservation => ({
+        ...reservation,
+        options: convertArrayToOptions(reservation.options),
+      })),
+    }));
+
+    return NextResponse.json({ children: transformed });
   } catch (err) {
     console.error("予約取得エラー:", err);
     return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
@@ -108,7 +125,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ✅ PATCH: 更新
 export async function PATCH(req: Request) {
   try {
     const token = (await cookies()).get("token")?.value;
@@ -120,7 +136,8 @@ export async function PATCH(req: Request) {
     const userId = payload.userId;
     const { reservationId, newDate, type, options } = await req.json();
 
-    if (!reservationId) return NextResponse.json({ error: "予約IDが必要です" }, { status: 400 });
+    if (!reservationId)
+      return NextResponse.json({ error: "予約IDが必要です" }, { status: 400 });
 
     const reservation = await prisma.reservation.findUnique({
       where: { id: reservationId },
@@ -136,7 +153,13 @@ export async function PATCH(req: Request) {
       data: {
         ...(newDate && { date: new Date(newDate) }),
         ...(type && { type }),
-        ...(options && { options }),
+        ...(options && {
+          // 既存のオプションをすべて削除してから、新たに作成する
+          options: {
+            deleteMany: {},
+            create: convertOptionsToArray(options),
+          },
+        }),
       },
     });
 
