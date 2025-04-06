@@ -51,10 +51,11 @@ export default function ReservationCalendar({
 
       return {
         id: res.id,
-        title: `${res.type === "basic" ? "基本" : "スポット"}利用\n${parts.join("・")}`,
+        title: `${res.type === "basic" ? "基本" : "スポット"}利用<br />${parts.join("<br />")}`,
         start: res.date,
         allDay: true,
       };
+      
     });
 
     setEvents(mapped);
@@ -124,6 +125,12 @@ export default function ReservationCalendar({
             (r) => isSameDay(r.date, targetDate) && r.id !== reservationId
           );
         }}
+        eventContent={(arg) => {
+          return {
+            html: `<div style="white-space: normal; font-size: 0.85rem;">${arg.event.title}</div>`,
+          };
+        }}
+        
       />
     </div>
   );
