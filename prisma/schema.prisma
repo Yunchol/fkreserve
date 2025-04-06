@@ -103,6 +103,16 @@ model InvoiceRevision {
   @@index([childId, month])
 }
 
+model BillingSetting {
+  id           String   @id @default(cuid())
+  version      String
+  basicPrices  Json
+  spotPrices   Json
+  optionPrices Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 
 
 //👇その後にやると良いこと
