@@ -1,6 +1,7 @@
 "use client";
 
-import {  useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type BillingEntry = {
   id: string;
@@ -10,6 +11,7 @@ type BillingEntry = {
 };
 
 export default function BillingPage() {
+  const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState("");
   const [searchName, setSearchName] = useState("");
   const [billingList, setBillingList] = useState<BillingEntry[]>([]);
@@ -40,7 +42,12 @@ export default function BillingPage() {
     } finally {
       setLoading(false);
     }
-    console.log(selectedMonth)
+  };
+
+  // 詳細ボタン押下時のハンドラー
+  const handleDetailClick = (childId: string) => {
+    // URL の month は必ず選択されている前提で渡す
+    router.push(`/admin/billing/${childId}?month=${selectedMonth}`);
   };
 
   return (
@@ -91,7 +98,7 @@ export default function BillingPage() {
       {/* 🔹 請求リスト */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-2">
-          検索結果（{selectedMonth || "全期間"})
+          検索結果（{selectedMonth || "全期間"}）
         </h2>
         {loading ? (
           <p>読み込み中...</p>
@@ -120,7 +127,10 @@ export default function BillingPage() {
                     {child.confirmed ? "✅ 確定済み" : "⏳ 未確定"}
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    <button className="text-blue-600 hover:underline text-sm">
+                    <button
+                      onClick={() => handleDetailClick(child.id)}
+                      className="text-blue-600 hover:underline text-sm"
+                    >
                       詳細
                     </button>
                   </td>
