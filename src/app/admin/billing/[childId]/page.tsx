@@ -14,28 +14,44 @@ export default function BillingDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const childId = params.childId;
-  const month = searchParams.get("month") || "未設定";
+  // month は null なら undefined 扱いにしておく
+  const monthParam = searchParams.get("month");
 
   const [invoice, setInvoice] = useState<any>(null);
   const [calcResult, setCalcResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // APIから請求書データ（確定済み or 自動計算結果）を取得する
   useEffect(() => {
     async function fetchData() {
+      // childId か month がないときは何もしない
+      if (!childId || !monthParam) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        if (!childId || month === "未設定") return;
-        // まず、請求書が既に確定しているか確認
-        const res = await fetch(`/api/admin/invoice?childId=${childId}&month=${month}`);
+        // 1) 確定済み請求書をチェック
+        const res = await fetch(
+          `/api/admin/invoice?childId=${childId}&month=${monthParam}`
+        );
         const data = await res.json();
+        console.log("Fetched invoice data:", data);
+
         if (data.invoice) {
+          // 確定済みなら invoice にセット
           setInvoice(data.invoice);
         } else {
-          // 確定されていなければ、自動計算結果を取得
-          const calcRes = await fetch(`/api/admin/invoice/calculate?childId=${childId}&month=${month}`);
+          // 未確定なら自動計算結果を取得
+          const calcRes = await fetch(
+            `/api/admin/invoice/calculate?childId=${childId}&month=${monthParam}`
+          );
           const calcData = await calcRes.json();
-          setCalcResult(calcData);
+          console.log("Fetched calculated data:", calcData);
+
+          // デバッグ用 shape と本番用 shape の両方に対応
+          const calcInfo = calcData.calculatedInvoice ?? calcData;
+          setCalcResult(calcInfo);
         }
       } catch (err) {
         console.error("Error fetching invoice:", err);
@@ -44,43 +60,47 @@ export default function BillingDetailPage() {
         setLoading(false);
       }
     }
+
     fetchData();
-  }, [childId, month]);
+  }, [childId, monthParam]);
 
-  // 仮の子どもの名前（実際は別APIで取得することも可能）
-  const childName = "山田 太郎";
+  // データ取得中・エラー時
+  if (loading) return <p>読み込み中...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
 
-  // invoiceが存在すれば確定済みのデータ、なければ自動計算結果を利用する
+  // 表示用のデータを決定
   const invoiceData = invoice || calcResult;
   const isFinalized = Boolean(invoice);
 
-  // APIから返ってくる breakdown を使うか、デモ用のダミーデータを利用
+  // デフォルト明細（APIからbreakdownが取れないとき用）
   const defaultItems: InvoiceItem[] = [
     { description: "基本利用料金", quantity: 1, unitPrice: 50000 },
     { description: "スポット利用料金", quantity: 1, unitPrice: 12000 },
     { description: "オプション料金", quantity: 2, unitPrice: 2400 },
   ];
-  const items: InvoiceItem[] =
-    invoiceData && invoiceData.breakdown ? invoiceData.breakdown : defaultItems;
+  // APIのbreakdownが配列ならそれを、そうでなければdefault
+  const items: InvoiceItem[] = Array.isArray(invoiceData?.breakdown)
+    ? invoiceData.breakdown
+    : defaultItems;
 
-  // 各項目の金額を数量×単価で算出
+  // 合計計算
   const subtotal: number = items.reduce(
     (sum: number, item: InvoiceItem) => sum + item.quantity * item.unitPrice,
     0
   );
-  const taxRate = 0.1; // 消費税10%
+  const taxRate = 0.1;
   const tax = Math.round(subtotal * taxRate);
   const total = subtotal + tax;
 
-  // 請求書番号、発行日は確定済みならAPIの値、なければ仮の表示にする
-  const invoiceNumber = isFinalized ? invoice?.id : "仮請求書";
+  // 請求書番号・発行日
+  const invoiceNumber = isFinalized ? invoiceData.id : "仮請求書";
   const invoiceDate = isFinalized
-    ? new Date(invoice?.finalizedAt).toISOString().split("T")[0]
+    ? new Date(invoiceData.finalizedAt).toISOString().split("T")[0]
     : "未確定";
-  const dueDate = "2025-06-10"; // ※必要に応じて計算・設定してください
+  const dueDate = "2025-06-10"; // 必要に応じて動的に設定
 
-  if (loading) return <p>読み込み中...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  // 子どもの名前は別API等で取得する想定
+  const childName = "山田 太郎";
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white shadow-lg">
@@ -116,7 +136,7 @@ export default function BillingDetailPage() {
           <strong>子どものID:</strong> {childId}
         </p>
         <p>
-          <strong>対象月:</strong> {month}
+          <strong>対象月:</strong> {monthParam}
         </p>
       </div>
 
@@ -132,10 +152,10 @@ export default function BillingDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item: InvoiceItem, index: number) => {
+            {items.map((item: InvoiceItem, idx: number) => {
               const amount = item.quantity * item.unitPrice;
               return (
-                <tr key={index}>
+                <tr key={idx}>
                   <td className="border px-4 py-2">{item.description}</td>
                   <td className="border px-4 py-2 text-right">{item.quantity}</td>
                   <td className="border px-4 py-2 text-right">

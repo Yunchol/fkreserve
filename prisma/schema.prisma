@@ -112,10 +112,3 @@ model BillingSetting {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
-
-
-
-//👇その後にやると良いこと
-// 「Step1」の曜日・週利用回数を BasicUsage に保存する実装
-// 請求書生成時に、BasicUsage + Reservation を月ごとに読み込んで合計を出す
-// BillingSetting の適用ロジック（version選択 or 最新を自動使用）
