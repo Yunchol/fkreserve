@@ -1,6 +1,14 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+
+// 内訳アイテムの型定義
+interface InvoiceItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
 
 export default function BillingDetailPage() {
   const params = useParams();
@@ -8,29 +16,71 @@ export default function BillingDetailPage() {
   const childId = params.childId;
   const month = searchParams.get("month") || "未設定";
 
-  // 仮のデータ（実際はAPI等で取得）
-  const childName = "山田 太郎";
-  const invoiceNumber = "INV-202505-001";
-  const invoiceDate = "2025-05-31";
-  const dueDate = "2025-06-10";
+  const [invoice, setInvoice] = useState<any>(null);
+  const [calcResult, setCalcResult] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 仮の明細データ：数量と単価を追加
-  const items = [
+  // APIから請求書データ（確定済み or 自動計算結果）を取得する
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        if (!childId || month === "未設定") return;
+        // まず、請求書が既に確定しているか確認
+        const res = await fetch(`/api/admin/invoice?childId=${childId}&month=${month}`);
+        const data = await res.json();
+        if (data.invoice) {
+          setInvoice(data.invoice);
+        } else {
+          // 確定されていなければ、自動計算結果を取得
+          const calcRes = await fetch(`/api/admin/invoice/calculate?childId=${childId}&month=${month}`);
+          const calcData = await calcRes.json();
+          setCalcResult(calcData);
+        }
+      } catch (err) {
+        console.error("Error fetching invoice:", err);
+        setError("データ取得に失敗しました");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [childId, month]);
+
+  // 仮の子どもの名前（実際は別APIで取得することも可能）
+  const childName = "山田 太郎";
+
+  // invoiceが存在すれば確定済みのデータ、なければ自動計算結果を利用する
+  const invoiceData = invoice || calcResult;
+  const isFinalized = Boolean(invoice);
+
+  // APIから返ってくる breakdown を使うか、デモ用のダミーデータを利用
+  const defaultItems: InvoiceItem[] = [
     { description: "基本利用料金", quantity: 1, unitPrice: 50000 },
     { description: "スポット利用料金", quantity: 1, unitPrice: 12000 },
     { description: "オプション料金", quantity: 2, unitPrice: 2400 },
   ];
+  const items: InvoiceItem[] =
+    invoiceData && invoiceData.breakdown ? invoiceData.breakdown : defaultItems;
 
   // 各項目の金額を数量×単価で算出
-  const itemsWithAmount = items.map((item) => ({
-    ...item,
-    amount: item.quantity * item.unitPrice,
-  }));
-
-  const subtotal = itemsWithAmount.reduce((sum, item) => sum + item.amount, 0);
+  const subtotal: number = items.reduce(
+    (sum: number, item: InvoiceItem) => sum + item.quantity * item.unitPrice,
+    0
+  );
   const taxRate = 0.1; // 消費税10%
   const tax = Math.round(subtotal * taxRate);
   const total = subtotal + tax;
+
+  // 請求書番号、発行日は確定済みならAPIの値、なければ仮の表示にする
+  const invoiceNumber = isFinalized ? invoice?.id : "仮請求書";
+  const invoiceDate = isFinalized
+    ? new Date(invoice?.finalizedAt).toISOString().split("T")[0]
+    : "未確定";
+  const dueDate = "2025-06-10"; // ※必要に応じて計算・設定してください
+
+  if (loading) return <p>読み込み中...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white shadow-lg">
@@ -82,18 +132,21 @@ export default function BillingDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {itemsWithAmount.map((item, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">{item.description}</td>
-                <td className="border px-4 py-2 text-right">{item.quantity}</td>
-                <td className="border px-4 py-2 text-right">
-                  ¥{item.unitPrice.toLocaleString()}
-                </td>
-                <td className="border px-4 py-2 text-right">
-                  ¥{item.amount.toLocaleString()}
-                </td>
-              </tr>
-            ))}
+            {items.map((item: InvoiceItem, index: number) => {
+              const amount = item.quantity * item.unitPrice;
+              return (
+                <tr key={index}>
+                  <td className="border px-4 py-2">{item.description}</td>
+                  <td className="border px-4 py-2 text-right">{item.quantity}</td>
+                  <td className="border px-4 py-2 text-right">
+                    ¥{item.unitPrice.toLocaleString()}
+                  </td>
+                  <td className="border px-4 py-2 text-right">
+                    ¥{amount.toLocaleString()}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr>
