@@ -20,6 +20,7 @@ export default function BillingDetailPage() {
   const [childName, setChildName] = useState("―");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (!childId || !month) return;
@@ -64,14 +65,12 @@ export default function BillingDetailPage() {
   if (error) return <p className="text-red-600">{error}</p>;
   if (!invoiceData?.breakdown) return <p>データが見つかりませんでした。</p>;
 
-  const { breakdown, weeklyCount } = invoiceData;
+  const { breakdown } = invoiceData;
+  const weeklyCount = invoiceData.weeklyCount ?? 0;
+  const basicUnitPrice = invoiceData.breakdown.basic?.unitPrice ?? 0;
+  
 
   const items: InvoiceItem[] = [
-    {
-      description: "基本利用料金",
-      quantity: weeklyCount ?? 0,
-      unitPrice: breakdown.basic?.unitPrice ?? 0,
-    },
     {
       description: "スポット利用料金",
       quantity: breakdown.spot?.quantity ?? 0,
@@ -136,11 +135,17 @@ export default function BillingDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => {
-              const amount = item.description === "基本利用料金"
-                ? item.unitPrice
-                : item.quantity * item.unitPrice;
+            {/* 基本利用料金（特別扱い） */}
+            <tr>
+              <td className="border px-4 py-2">基本利用料金</td>
+              <td className="border px-4 py-2 text-right">{weeklyCount}</td>
+              <td className="border px-4 py-2 text-right">¥{basicUnitPrice.toLocaleString()}</td>
+              <td className="border px-4 py-2 text-right">¥{basicUnitPrice.toLocaleString()}</td>
+            </tr>
 
+            {/* その他（スポット・オプション） */}
+            {items.map((item, idx) => {
+              const amount = item.quantity * item.unitPrice;
               return (
                 <tr key={idx}>
                   <td className="border px-4 py-2">{item.description}</td>
@@ -151,6 +156,7 @@ export default function BillingDetailPage() {
               );
             })}
           </tbody>
+
           <tfoot>
             <tr>
               <td colSpan={3} className="border px-4 py-2 font-bold">小計</td>

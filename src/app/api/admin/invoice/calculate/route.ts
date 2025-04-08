@@ -76,7 +76,7 @@ export async function GET(req: Request) {
 
     // breakdown を組み立て
     const breakdown = {
-      basic: { quantity: 1, unitPrice: basicPrice },
+      basic: { quantity: weeklyCount, unitPrice: basicPrice },
       spot: { quantity: spotCount, unitPrice: spotUnit },
       options: optionBreakdown
     };
@@ -93,7 +93,8 @@ export async function GET(req: Request) {
     return NextResponse.json({
       version: billingSetting.version,
       breakdown,
-      total
+      total,
+      weeklyCount 
     });
 
   } catch (err) {
