@@ -37,6 +37,8 @@ model Child {
   basicUsages  BasicUsage[]
   invoices     Invoice[]           // ✅ 追加：請求書との1対多リレーション
   revisions    InvoiceRevision[]   // ✅ 追加：請求書修正履歴との1対多リレーション
+  monthlyOptionUsages MonthlyOptionUsage[] 
+
 }
 
 
@@ -65,16 +67,19 @@ model Option {
 
 
 model BasicUsage {
-  id          String   @id @default(cuid())
-  child       Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
-  childId     String
-  month       String   // "2025-04" などの形式（Date型ではなく文字列）
-  weeklyCount Int
-  weekdays    Json // 例: ["月曜日", "水曜日"]
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId       String
+  month         String
+  weeklyCount   Int
+  weekdays      Json
+  createdAt     DateTime @default(now())
 
-  @@unique([childId, month]) // 子どもごとに月1つの記録
+  optionUsages  MonthlyOptionUsage[]  // ← リレーション先（1対多）
+
+  @@unique([childId, month])
 }
+
 
 model Invoice {
   id          String   @id @default(cuid())
@@ -112,3 +117,22 @@ model BillingSetting {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model MonthlyOptionUsage {
+  id            String   @id @default(cuid())
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId       String
+  month         String
+  optionType    String
+  count         Int
+  createdAt     DateTime @default(now())
+
+  basicUsage    BasicUsage? @relation(fields: [basicUsageId], references: [id], onDelete: Cascade)
+  basicUsageId  String?
+
+  @@unique([childId, month, optionType])
+  @@index([childId, month])
+}
+
+
+

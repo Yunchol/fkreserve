@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ReservationOption } from "@/types/reservation";
 import { convertArrayToOptions, convertOptionsToArray } from "@/lib/utils/convertOption"; 
+import { summarizeOptions } from "@/lib/utils/summarizeOptions"; 
 
 // GET: 予約一覧取得（親の子どもと予約すべて）
 export async function GET() {
@@ -55,8 +55,30 @@ export async function POST(req: Request) {
     if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
 
     const userId = payload.userId;
-    const body = await req.json();
-    const { childId, date, type, options, reservations, basicUsage, month } = body;
+    // ✅ 1回だけ await req.json() して、そこに型をつける
+    const body: {
+      childId: string;
+      date?: string;
+      type?: string;
+      options?: any;
+      reservations?: any[];
+      basicUsage?: any;
+      month?: string;
+      optionSummary?: Record<string, Record<string, number>>;
+    } = await req.json();
+
+    const {
+      childId,
+      date,
+      type,
+      options,
+      reservations,
+      basicUsage,
+      month,
+      optionSummary,
+    } = body;
+
+
 
     // ✅ 子どもの所有者チェック
     const child = await prisma.child.findUnique({ where: { id: childId } });
@@ -70,38 +92,38 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "月情報または利用プランが不足しています" }, { status: 400 });
       }
 
-      // 一括トランザクションで保存（既存予約は削除 → 上書き）
+      // 🔹 一括予約と BasicUsage をトランザクションで保存
       await prisma.$transaction([
-        // ① 既存予約削除（同月）
+        // ① 既存予約を削除
         prisma.reservation.deleteMany({
           where: {
             childId,
             date: {
               gte: new Date(`${month}-01`),
-              lt: new Date(`${month}-31`) // 仮：月末日（うるう年・末日は後で調整してもOK）
-            }
-          }
+              lt: new Date(`${month}-31`),
+            },
+          },
         }),
-        // ② BasicUsage 上書き（upsert）
+        // ② BasicUsage を upsert
         prisma.basicUsage.upsert({
           where: {
             childId_month: {
               childId,
-              month
-            }
+              month,
+            },
           },
           update: {
             weeklyCount: basicUsage.weeklyCount,
-            weekdays: basicUsage.weekdays
+            weekdays: basicUsage.weekdays,
           },
           create: {
             childId,
             month,
             weeklyCount: basicUsage.weeklyCount,
-            weekdays: basicUsage.weekdays
-          }
+            weekdays: basicUsage.weekdays,
+          },
         }),
-        // ③ 新しい予約をすべて登録
+        // ③ 予約データをすべて作成
         ...reservations.map((r) =>
           prisma.reservation.create({
             data: {
@@ -114,17 +136,41 @@ export async function POST(req: Request) {
                   count: opt.count,
                   time: opt.time || null,
                   lessonName: opt.lessonName || null,
-                }))
-              }
-            }
+                })),
+              },
+            },
           })
-        )
+        ),
       ]);
+
+      // ✅ 追加処理：MonthlyOptionUsage の保存
+      if (optionSummary && typeof optionSummary === "object") {
+        for (const [monthKey, options] of Object.entries(optionSummary)) {
+          for (const [optionType, count] of Object.entries(options)) {
+            await prisma.monthlyOptionUsage.upsert({
+              where: {
+                childId_month_optionType: {
+                  childId,
+                  month: monthKey,
+                  optionType,
+                },
+              },
+              update: { count },
+              create: {
+                childId,
+                month: monthKey,
+                optionType,
+                count,
+              },
+            });
+          }
+        }
+      }
 
       return NextResponse.json({ success: true });
     }
 
-    // ✅ 単体登録
+    // ✅ 単体予約の作成（個別登録）
     if (!date || !type || !Array.isArray(options)) {
       return NextResponse.json({ error: "パラメータ不足" }, { status: 400 });
     }
@@ -184,13 +230,13 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "不正な予約ID" }, { status: 403 });
     }
 
+    // ✅ 予約の更新（オプションも含む）
     const updated = await prisma.reservation.update({
       where: { id: reservationId },
       data: {
         ...(newDate && { date: new Date(newDate) }),
         ...(type && { type }),
         ...(options && {
-          // 既存のオプションをすべて削除してから、新たに作成する
           options: {
             deleteMany: {},
             create: convertOptionsToArray(options),
@@ -199,12 +245,60 @@ export async function PATCH(req: Request) {
       },
     });
 
+    // ✅ ここからオプション集計の再保存
+
+    // 月情報を取得（新しい日付があればそれを使う）
+    const effectiveDate = newDate ? new Date(newDate) : updated.date;
+    const monthStr = `${effectiveDate.getFullYear()}-${String(effectiveDate.getMonth() + 1).padStart(2, "0")}`;
+
+    // その月のすべての予約（オプション込み）を取得
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        childId: updated.childId,
+        date: {
+          gte: new Date(`${monthStr}-01`),
+          lt: new Date(`${monthStr}-31`), // 最後の日は簡易でOK
+        },
+      },
+      include: { options: true },
+    });
+
+    // `Reservation[]` を `summarizeOptions` に渡して集計
+    const rawSummary = summarizeOptions(reservations.map(r => ({
+      id: r.id,
+      date: r.date.toISOString().split("T")[0],
+      type: r.type as "basic" | "spot",
+      options: convertArrayToOptions(r.options),
+    })));
+
+    // 月単位の集計を保存（基本的に1ヶ月分だけなのでそれだけ処理）
+    const optionData = rawSummary[monthStr] || {};
+    for (const [optionType, count] of Object.entries(optionData)) {
+      await prisma.monthlyOptionUsage.upsert({
+        where: {
+          childId_month_optionType: {
+            childId: updated.childId,
+            month: monthStr,
+            optionType,
+          },
+        },
+        update: { count },
+        create: {
+          childId: updated.childId,
+          month: monthStr,
+          optionType,
+          count,
+        },
+      });
+    }
+
     return NextResponse.json({ success: true, reservation: updated });
   } catch (err) {
     console.error("予約更新エラー:", err);
     return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
   }
 }
+
 
 // ✅ DELETE: 単体 or 来月分一括削除
 export async function DELETE(req: Request) {

@@ -50,7 +50,7 @@ export const deleteNextMonthReservations = async (childId: string, month: string
 };
 
 
-// 🔸一括登録＋basicUsage付き
+// 🔸一括登録＋basicUsage付き＋optionSummary追加
 export const postReservations = async (
   childId: string,
   reservations: {
@@ -62,7 +62,8 @@ export const postReservations = async (
     weeklyCount: number;
     weekdays: string[];
   },
-  month: string
+  month: string,
+  optionSummary: Record<string, Record<string, number>> // ← これを追加
 ) => {
   const res = await fetch("/api/parent/reservations", {
     method: "POST",
@@ -71,6 +72,7 @@ export const postReservations = async (
       childId,
       month,
       basicUsage,
+      optionSummary, // ← ここも追加！
       reservations: reservations.map((r) => ({
         ...r,
         options: convertOptionsToArray(r.options), // ✅ Option[] に変換して送信
@@ -84,4 +86,5 @@ export const postReservations = async (
 
   return res.json();
 };
+
 

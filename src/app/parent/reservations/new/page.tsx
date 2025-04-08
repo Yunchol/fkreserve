@@ -13,7 +13,7 @@ import { DateClickArg } from "@fullcalendar/interaction";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { postReservations, deleteNextMonthReservations } from "@/lib/api/reservation";
-
+import { summarizeOptions } from "@/lib/utils/summarizeOptions";
 // UIレイアウトを左右分割に変更
 export default function NewReservationPage() {
   const [activeStep, setActiveStep] = useState(0);
@@ -209,7 +209,7 @@ export default function NewReservationPage() {
         .filter(([, v]) => v)
         .map(([day]) => day);
   
-      // ✅ 保存リクエスト送信（予約＋BasicUsageまとめて）
+      // ✅ 保存リクエスト送信（予約＋BasicUsage+monthlyUsageまとめて）
       await postReservations(
         selectedChildId,
         toSave,
@@ -217,7 +217,8 @@ export default function NewReservationPage() {
           weeklyCount: weeklyUsage,
           weekdays,
         },
-        nextMonthStr
+        nextMonthStr,
+        summarizeOptions(toSave) // ← 追加！
       );
   
       alert("予約を保存しました！");
