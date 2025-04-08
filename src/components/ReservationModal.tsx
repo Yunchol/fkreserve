@@ -139,7 +139,7 @@ export default function ReservationModal({
                     {key === "lessonCar" && (
                       <input
                         type="text"
-                        value={carOptions.lessonCar.name}
+                        value={carOptions.lessonCar.name ?? ""} // ← ここを修正！
                         onChange={(e) =>
                           setCarOptions((prev) => ({
                             ...prev,
