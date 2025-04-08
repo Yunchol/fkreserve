@@ -17,6 +17,7 @@ export default function BillingDetailPage() {
 
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [isFinalized, setIsFinalized] = useState(false);
+  const [childName, setChildName] = useState("―");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,19 +46,30 @@ export default function BillingDetailPage() {
       }
     };
 
+    const fetchChildName = async () => {
+      try {
+        const res = await fetch(`/api/admin/child/${childId}`);
+        const data = await res.json();
+        setChildName(data.name || "名前未取得");
+      } catch {
+        setChildName("名前取得失敗");
+      }
+    };
+
     fetchInvoice();
+    fetchChildName();
   }, [childId, month]);
 
   if (loading) return <p>読み込み中...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
   if (!invoiceData?.breakdown) return <p>データが見つかりませんでした。</p>;
 
-  const { breakdown } = invoiceData;
+  const { breakdown, weeklyCount } = invoiceData;
 
   const items: InvoiceItem[] = [
     {
       description: "基本利用料金",
-      quantity: breakdown.basic?.quantity ?? 0,
+      quantity: weeklyCount ?? 0,
       unitPrice: breakdown.basic?.unitPrice ?? 0,
     },
     {
@@ -72,7 +84,13 @@ export default function BillingDetailPage() {
     })),
   ];
 
-  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const subtotal = items.reduce((sum, item) =>
+    item.description === "基本利用料金"
+      ? sum + item.unitPrice // 基本料金は単価をそのまま加算（×しない）
+      : sum + item.quantity * item.unitPrice,
+    0
+  );
+
   const tax = Math.round(subtotal * 0.1);
   const total = subtotal + tax;
 
@@ -81,7 +99,6 @@ export default function BillingDetailPage() {
     ? new Date(invoiceData.finalizedAt).toISOString().split("T")[0]
     : "未確定";
   const dueDate = "2025-06-10";
-  const childName = "山田 太郎"; // TODO: 本来は別APIから取得
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white shadow-lg">
@@ -119,14 +136,20 @@ export default function BillingDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item, idx) => (
-              <tr key={idx}>
-                <td className="border px-4 py-2">{item.description}</td>
-                <td className="border px-4 py-2 text-right">{item.quantity}</td>
-                <td className="border px-4 py-2 text-right">¥{item.unitPrice.toLocaleString()}</td>
-                <td className="border px-4 py-2 text-right">¥{(item.quantity * item.unitPrice).toLocaleString()}</td>
-              </tr>
-            ))}
+            {items.map((item, idx) => {
+              const amount = item.description === "基本利用料金"
+                ? item.unitPrice
+                : item.quantity * item.unitPrice;
+
+              return (
+                <tr key={idx}>
+                  <td className="border px-4 py-2">{item.description}</td>
+                  <td className="border px-4 py-2 text-right">{item.quantity}</td>
+                  <td className="border px-4 py-2 text-right">¥{item.unitPrice.toLocaleString()}</td>
+                  <td className="border px-4 py-2 text-right">¥{amount.toLocaleString()}</td>
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr>

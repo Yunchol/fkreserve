@@ -74,7 +74,6 @@ export async function GET(req: Request) {
       };
     }
 
-
     // breakdown を組み立て
     const breakdown = {
       basic: { quantity: 1, unitPrice: basicPrice },
