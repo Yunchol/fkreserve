@@ -124,7 +124,9 @@ export default function BillingDetailPage() {
   const dueDate = "2025-06-10";
 
   return (
-    <div className="p-6 max-w-3xl mx-auto bg-white shadow-lg">
+  <div>
+    {/* 🔽 印刷対象エリア */}
+    <div id="invoice-print-area" className="p-6 max-w-3xl mx-auto bg-white shadow-lg">
       {/* ヘッダー */}
       <div className="text-center border-b pb-4">
         <h1 className="text-3xl font-bold">請求書</h1>
@@ -215,22 +217,32 @@ export default function BillingDetailPage() {
         )}
       </div>
 
-      {/* 請求確定ボタン */}
-      {!isFinalized && (
-        <div className="mt-4 text-right">
-          <button
-            onClick={handleFinalize}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            請求を確定する
-          </button>
-        </div>
-      )}
-
       {/* フッター */}
       <div className="mt-8 border-t pt-4 text-center text-xs text-gray-500">
         <p>この請求書はオンラインで発行された正式な書類です。<br />お支払いに関するご質問はお問い合わせください。</p>
       </div>
     </div>
-  );
+
+    {/* 🔽 印刷ボタンと請求確定ボタン（印刷時は非表示） */}
+    <div className="mt-4 text-right no-print space-x-2">
+      {!isFinalized && (
+        <button
+          onClick={handleFinalize}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          請求を確定する
+        </button>
+      )}
+      {isFinalized && (
+        <button
+          onClick={() => window.print()}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          印刷／PDF保存
+        </button>
+      )}
+    </div>
+  </div>
+);
+
 }

@@ -120,3 +120,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #invoice-print-area,
+  #invoice-print-area * {
+    visibility: visible;
+  }
+  #invoice-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
