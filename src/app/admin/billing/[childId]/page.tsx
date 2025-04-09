@@ -18,9 +18,9 @@ export default function BillingDetailPage() {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [isFinalized, setIsFinalized] = useState(false);
   const [childName, setChildName] = useState("―");
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
 
   useEffect(() => {
     if (!childId || !month) return;
@@ -33,11 +33,14 @@ export default function BillingDetailPage() {
         if (data.invoice) {
           setInvoiceData(data.invoice);
           setIsFinalized(true);
+          setNote(data.invoice.note || "");
         } else {
           const calcRes = await fetch(`/api/admin/invoice/calculate?childId=${childId}&month=${month}`);
           const calcData = await calcRes.json();
-          setInvoiceData(calcData.calculatedInvoice ?? calcData);
+          const info = calcData.calculatedInvoice ?? calcData;
+          setInvoiceData(info);
           setIsFinalized(false);
+          setNote(""); // 新規なので空にしておく
         }
       } catch (err) {
         console.error("データ取得エラー", err);
@@ -61,14 +64,40 @@ export default function BillingDetailPage() {
     fetchChildName();
   }, [childId, month]);
 
+  const handleFinalize = async () => {
+    if (!invoiceData || !childId || !month) return;
+
+    try {
+      const res = await fetch("/api/admin/invoice/finalize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          childId,
+          month,
+          version: invoiceData.version,
+          breakdown: invoiceData.breakdown,
+          total,
+          weeklyCount: invoiceData.weeklyCount,
+          note,
+        }),
+      });
+
+      if (!res.ok) throw new Error("請求確定に失敗しました");
+
+      alert("請求を確定しました！");
+      setIsFinalized(true);
+    } catch (err) {
+      alert("確定処理中にエラーが発生しました");
+    }
+  };
+
   if (loading) return <p>読み込み中...</p>;
   if (error) return <p className="text-red-600">{error}</p>;
   if (!invoiceData?.breakdown) return <p>データが見つかりませんでした。</p>;
 
   const { breakdown } = invoiceData;
   const weeklyCount = invoiceData.weeklyCount ?? 0;
-  const basicUnitPrice = invoiceData.breakdown.basic?.unitPrice ?? 0;
-  
+  const basicUnitPrice = breakdown.basic?.unitPrice ?? 0;
 
   const items: InvoiceItem[] = [
     {
@@ -83,13 +112,7 @@ export default function BillingDetailPage() {
     })),
   ];
 
-  const subtotal = items.reduce((sum, item) =>
-    item.description === "基本利用料金"
-      ? sum + item.unitPrice // 基本料金は単価をそのまま加算（×しない）
-      : sum + item.quantity * item.unitPrice,
-    0
-  );
-
+  const subtotal = basicUnitPrice + items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const tax = Math.round(subtotal * 0.1);
   const total = subtotal + tax;
 
@@ -101,11 +124,13 @@ export default function BillingDetailPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white shadow-lg">
+      {/* ヘッダー */}
       <div className="text-center border-b pb-4">
         <h1 className="text-3xl font-bold">請求書</h1>
         <p className="mt-2 text-sm">保護者様向け　正式請求書</p>
       </div>
 
+      {/* 請求先 */}
       <div className="mt-4 flex flex-col md:flex-row justify-between">
         <div>
           <p className="font-bold">請求先:</p>
@@ -119,11 +144,13 @@ export default function BillingDetailPage() {
         </div>
       </div>
 
+      {/* 基本情報 */}
       <div className="mt-4 border-t pt-4">
         <p><strong>子どものID:</strong> {childId}</p>
         <p><strong>対象月:</strong> {month}</p>
       </div>
 
+      {/* 明細 */}
       <div className="mt-6">
         <table className="w-full border-collapse">
           <thead>
@@ -135,7 +162,6 @@ export default function BillingDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {/* 基本利用料金（特別扱い） */}
             <tr>
               <td className="border px-4 py-2">基本利用料金</td>
               <td className="border px-4 py-2 text-right">{weeklyCount}</td>
@@ -143,7 +169,6 @@ export default function BillingDetailPage() {
               <td className="border px-4 py-2 text-right">¥{basicUnitPrice.toLocaleString()}</td>
             </tr>
 
-            {/* その他（スポット・オプション） */}
             {items.map((item, idx) => {
               const amount = item.quantity * item.unitPrice;
               return (
@@ -156,7 +181,6 @@ export default function BillingDetailPage() {
               );
             })}
           </tbody>
-
           <tfoot>
             <tr>
               <td colSpan={3} className="border px-4 py-2 font-bold">小計</td>
@@ -174,6 +198,35 @@ export default function BillingDetailPage() {
         </table>
       </div>
 
+      {/* 備考欄 */}
+      <div className="mt-6">
+        <label className="block font-semibold mb-1">備考</label>
+        {isFinalized ? (
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">{note || "―"}</p>
+        ) : (
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="w-full border rounded p-2 text-sm"
+            rows={4}
+            placeholder="特記事項などがあれば入力してください"
+          />
+        )}
+      </div>
+
+      {/* 請求確定ボタン */}
+      {!isFinalized && (
+        <div className="mt-4 text-right">
+          <button
+            onClick={handleFinalize}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            請求を確定する
+          </button>
+        </div>
+      )}
+
+      {/* フッター */}
       <div className="mt-8 border-t pt-4 text-center text-xs text-gray-500">
         <p>この請求書はオンラインで発行された正式な書類です。<br />お支払いに関するご質問はお問い合わせください。</p>
       </div>

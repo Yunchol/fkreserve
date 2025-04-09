@@ -91,6 +91,8 @@ model Invoice {
   total       Int
   finalizedAt DateTime
   createdAt   DateTime @default(now())
+  note        String?  // ✅ 備考欄（任意）
+  weeklyCount Int? 
 
   @@unique([childId, month]) // 子ども × 月で一意
   @@index([childId, month])  // よく検索する条件にインデックス追加
