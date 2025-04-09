@@ -1,4 +1,5 @@
 // /api/children/[childId]/route.ts (例)
+//なんかエラー出るけど、一旦大丈夫、paramsが非同期でやれって怒られる
 
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";

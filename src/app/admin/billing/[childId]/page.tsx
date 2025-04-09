@@ -117,9 +117,10 @@ export default function BillingDetailPage() {
   const total = subtotal + tax;
 
   const invoiceNumber = isFinalized ? invoiceData.id : "仮請求書";
-  const invoiceDate = isFinalized
-    ? new Date(invoiceData.finalizedAt).toISOString().split("T")[0]
-    : "未確定";
+  const invoiceDate = isFinalized && invoiceData.finalizedAt
+  ? new Date(invoiceData.finalizedAt).toISOString().split("T")[0]
+  : "未確定";
+
   const dueDate = "2025-06-10";
 
   return (
