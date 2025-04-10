@@ -1,22 +1,21 @@
-// src/components/EditUserModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { User } from "@/types/user";
-
+import { Button } from "@/components/ui/button";
 
 type Props = {
   user: User;
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void; // 保存後に親で再取得させる用
+  onSave: () => void;
 };
 
 export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) {
   const [formData, setFormData] = useState<User>(user);
 
   useEffect(() => {
-    setFormData(user); // モーダルが開くたびに初期値更新
+    setFormData({ ...user, role: user.role || "pending" }); // ← 初期値をpendingに
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -42,55 +41,57 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">ユーザー編集</h2>
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md animate-in fade-in">
+        <h2 className="text-xl font-bold mb-4 text-gray-800">ユーザー編集</h2>
 
         <div className="space-y-4">
+          {/* 名前 */}
           <div>
-            <label className="block text-sm">名前</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">名前</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="border w-full rounded px-2 py-1"
+              className="border w-full rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-300"
             />
           </div>
 
+          {/* メール */}
           <div>
-            <label className="block text-sm">メール</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">メール</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="border w-full rounded px-2 py-1"
+              className="border w-full rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-300"
             />
           </div>
 
+          {/* ロール */}
           <div>
-            <label className="block text-sm">ロール</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ロール</label>
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="border w-full rounded px-2 py-1"
+              className="border w-full rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-300"
             >
-              <option value="admin">admin</option>
-              <option value="staff">staff</option>
-              <option value="parent">parent</option>
-              {/* <option value="pending">pending</option> */}
+              <option value="pending">⏳ pending（未設定）</option>
+              <option value="admin">👑 admin</option>
+              <option value="staff">🧑‍🏫 staff</option>
+              <option value="parent">👪 parent</option>
             </select>
           </div>
         </div>
 
+        {/* ボタン */}
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="px-4 py-1 border rounded">
+          <Button variant="outline" onClick={onClose}>
             キャンセル
-          </button>
-          <button onClick={handleSubmit} className="px-4 py-1 bg-blue-500 text-white rounded">
-            保存
-          </button>
+          </Button>
+          <Button onClick={handleSubmit}>保存</Button>
         </div>
       </div>
     </div>
