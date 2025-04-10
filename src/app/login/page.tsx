@@ -76,6 +76,14 @@ export default function LoginPage() {
           <Button className="w-full" onClick={handleLogin}>
             ログイン
           </Button>
+
+          {/* 🔽 ここを追加！ */}
+          <div className="text-center mt-4 text-sm text-gray-600">
+            アカウントをお持ちでない方は{" "}
+            <a href="/signup" className="text-blue-600 hover:underline">
+              新規登録はこちら
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
