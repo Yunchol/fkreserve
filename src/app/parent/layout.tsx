@@ -26,25 +26,37 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     );
   }
 
-
   return (
-      <div className="min-h-screen bg-gray-100">
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow px-6 py-4 flex flex-wrap gap-2 justify-between items-center">
-  
-          <div className="text-sm md:text-base text-gray-700 font-medium">
-            ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
-            {/* <Button variant="outline" onClick={() => router.push("/parent/parent-dashboard")}>お知らせ</Button> */}
-            <Button variant="outline" onClick={() => router.push("/parent/reservations")}>予約管理</Button>
-            <Button variant="outline" onClick={() => router.push("/parent/billing")}>請求確認</Button>
-            {/* <Button variant="outline" onClick={() => router.push("/parent/profile")}>プロフィール</Button> */}
-          </div>
-  
+    <div className="min-h-screen bg-gray-100">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b px-6 py-3 flex items-center justify-between">
+        {/* 左側：ユーザー名 */}
+        <div className="text-default text-gray-700">
+          ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
+        </div>
+
+        {/* 右側：ナビボタン */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => router.push("/parent/reservations")}
+          >
+            予約管理
+          </Button>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => router.push("/parent/billing")}
+          >
+            請求確認
+          </Button>
           <LogoutButton />
-        </header>
-  
-        <main className="mx-auto pt-24 px-4">
-          {children}
-        </main>
-      </div>
-    );
+        </div>
+      </header>
+
+      <main className="pt-24 px-4 max-w-6xl mx-auto w-full">
+        {children}
+      </main>
+    </div>
+  );
 }

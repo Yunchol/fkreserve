@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type BillingEntry = {
   id: string;
@@ -44,100 +46,103 @@ export default function BillingPage() {
     }
   };
 
-  // 詳細ボタン押下時のハンドラー
   const handleDetailClick = (childId: string) => {
-    // URL の month は必ず選択されている前提で渡す
     router.push(`/admin/billing/${childId}?month=${selectedMonth}`);
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold mb-4">請求管理（管理者用）</h1>
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">請求管理（管理者用）</h1>
 
-      {/* 🔹 月選択 */}
-      <div>
-        <label className="block font-medium mb-1">請求対象の月</label>
-        <input
-          type="month"
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="border rounded p-2 w-full max-w-xs"
-        />
-      </div>
+      {/* 🔹 検索フィルター */}
+      <div className="flex flex-wrap gap-4 items-end">
+        <div className="flex flex-col">
+          <label className="text-sm font-medium mb-1">請求対象の月</label>
+          <Input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="w-48"
+          />
+        </div>
 
-      {/* 🔹 子ども検索 */}
-      <div>
-        <label className="block font-medium mb-1">子どもを検索</label>
-        <input
-          type="text"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-          placeholder="名前で検索..."
-          className="border rounded p-2 w-full max-w-xs"
-        />
-      </div>
+        <div className="flex flex-col">
+          <label className="text-sm font-medium mb-1">子どもを検索</label>
+          <Input
+            type="text"
+            placeholder="名前で検索..."
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            className="w-64"
+          />
+        </div>
 
-      {/* 🔹 検索ボタン */}
-      <div>
-        <button
+        <Button
           onClick={handleSearch}
           disabled={isSearchDisabled}
-          className={`px-4 py-2 rounded ${
-            isSearchDisabled
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
+          className="mt-1"
         >
           検索する
-        </button>
+        </Button>
       </div>
 
       {/* 🔹 エラー表示 */}
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="text-red-600 text-sm">{error}</p>}
 
-      {/* 🔹 請求リスト */}
-      <div className="mt-6">
+      {/* 🔹 結果表示 */}
+      <div className="mt-4">
         <h2 className="text-lg font-semibold mb-2">
           検索結果（{selectedMonth || "全期間"}）
         </h2>
+
         {loading ? (
           <p>読み込み中...</p>
         ) : billingList.length === 0 ? (
-          <p>該当する請求が見つかりませんでした</p>
+          <p className="text-gray-600">該当する請求が見つかりませんでした。</p>
         ) : (
-          <table className="w-full border border-gray-300 text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-4 py-2 text-left">名前</th>
-                <th className="border px-4 py-2 text-right">合計金額</th>
-                <th className="border px-4 py-2 text-center">状態</th>
-                <th className="border px-4 py-2 text-center">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {billingList.map((child) => (
-                <tr key={child.id}>
-                  <td className="border px-4 py-2">{child.name}</td>
-                  <td className="border px-4 py-2 text-right">
-                    {child.confirmed && child.total !== null
-                      ? `¥${child.total.toLocaleString()}`
-                      : "―"}
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    {child.confirmed ? "✅ 確定済み" : "⏳ 未確定"}
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <button
-                      onClick={() => handleDetailClick(child.id)}
-                      className="text-blue-600 hover:underline text-sm"
-                    >
-                      詳細
-                    </button>
-                  </td>
+          <div className="overflow-x-auto rounded border">
+            <table className="min-w-full text-sm border-collapse">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="px-4 py-2 text-left border-b">名前</th>
+                  <th className="px-4 py-2 text-right border-b">合計金額</th>
+                  <th className="px-4 py-2 text-center border-b">状態</th>
+                  <th className="px-4 py-2 text-center border-b">操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {billingList.map((child) => (
+                  <tr key={child.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 border-b">{child.name}</td>
+                    <td className="px-4 py-2 text-right border-b">
+                      {child.confirmed && child.total !== null
+                        ? `¥${child.total.toLocaleString()}`
+                        : "―"}
+                    </td>
+                    <td className="px-4 py-2 text-center border-b">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                          child.confirmed
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {child.confirmed ? "✅ 確定済み" : "⏳ 未確定"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-center border-b">
+                      <button
+                        onClick={() => handleDetailClick(child.id)}
+                        className="text-blue-600 hover:underline"
+                      >
+                        詳細
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

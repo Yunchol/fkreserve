@@ -28,21 +28,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow px-6 py-4 flex flex-wrap gap-2 justify-between items-center">
-
-        <div className="text-sm md:text-base text-gray-700 font-medium">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b px-6 py-3 flex items-center justify-between">
+        {/* 左側：ロゴ or ユーザー情報 */}
+        <div className="text-default text-gray-700">
           ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
-          <Button variant="outline" onClick={() => router.push("/admin/calendar")}>カレンダー管理</Button>
-          <Button variant="outline" onClick={() => router.push("/admin/user-management")}>ユーザー管理</Button>
-          {/* <Button variant="outline" onClick={() => router.push("/admin/reservations")}>利用日確認</Button> */}
-          <Button variant="outline" onClick={() => router.push("/admin/billing")}>請求管理</Button>
-          {/* <Button variant="outline" onClick={() => router.push("/admin/announcements")}>お知らせ</Button> */}
         </div>
 
-        <LogoutButton />
+        {/* 右側：ナビゲーションボタン */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => router.push("/admin/user-management")}
+          >
+            ユーザー管理
+          </Button>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => router.push("/admin/billing")}
+          >
+            請求管理
+          </Button>
+          <LogoutButton />
+        </div>
       </header>
 
-      <main className="mx-auto pt-24 px-4">
+      <main className="pt-24 px-4 max-w-6xl mx-auto w-full">
         {children}
       </main>
     </div>

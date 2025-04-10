@@ -11,7 +11,8 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null); // ← エラー状態
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // ← 追加！
   const router = useRouter();
 
   const validate = () => {
@@ -34,7 +35,8 @@ export default function SignupPage() {
       return;
     }
 
-    setError(null); // バリデーションOKならエラーをリセット
+    setError(null);
+    setLoading(true); // ← 開始！
 
     const res = await fetch("/api/signup", {
       method: "POST",
@@ -42,8 +44,9 @@ export default function SignupPage() {
       headers: { "Content-Type": "application/json" },
     });
 
+    setLoading(false); // ← 完了！
+
     if (res.ok) {
-      alert("仮登録が完了しました。承認をお待ちください。");
       router.push("/login");
     } else {
       const data = await res.json();
@@ -76,9 +79,18 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button className="w-full" onClick={handleSignup}>
+
+          <Button
+            disabled={loading}
+            onClick={handleSignup}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            {loading && (
+              <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            )}
             登録
           </Button>
+
           <div className="text-center mt-4 text-sm text-gray-600">
             すでにアカウントをお持ちの方は{" "}
             <Link href="/login" className="text-blue-600 hover:underline">
