@@ -5,18 +5,20 @@ import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditUserModal from "@/components/EditUserModal";
+import { Button } from "@/components/ui/button";
 import { User } from "@/types/user";
 
+// ロール表示に応じたスタイル
 const getRoleStyle = (role: string) => {
   switch (role) {
     case "admin":
-      return "bg-red-100 text-red-800 px-2 py-1 rounded";
+      return "bg-red-100 text-red-700";
     case "parent":
-      return "bg-blue-100 text-blue-800 px-2 py-1 rounded";
+      return "bg-blue-100 text-blue-700";
     case "staff":
-      return "bg-green-100 text-green-800 px-2 py-1 rounded";
+      return "bg-green-100 text-green-700";
     case "pending":
-      return "bg-gray-100 text-gray-800 px-2 py-1 rounded";
+      return "bg-gray-100 text-gray-700";
     default:
       return "";
   }
@@ -33,9 +35,9 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRoles, setExpandedRoles] = useState<{ [key: string]: boolean }>({
-    admin: false,
-    parent: false,
-    staff: false,
+    admin: true,
+    parent: true,
+    staff: true,
     pending: true,
   });
 
@@ -55,18 +57,17 @@ export default function UserManagementPage() {
   const handleDelete = async (id: string) => {
     const confirm = window.confirm("このユーザーを本当に削除しますか？");
     if (!confirm) return;
-  
+
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "DELETE",
     });
-  
+
     if (res.ok) {
-      fetchUsers(); // 最新の一覧を取得
+      fetchUsers();
     } else {
       alert("削除に失敗しました");
     }
   };
-  
 
   const fetchUsers = async () => {
     try {
@@ -99,8 +100,8 @@ export default function UserManagementPage() {
   }, {} as { [key: string]: User[] });
 
   return (
-    <div className="p-4 max-w-5xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold mb-4">ユーザー管理</h1>
+    <div className="p-4 max-w-6xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">ユーザー管理</h1>
 
       {loading ? (
         <div className="space-y-4">
@@ -111,49 +112,65 @@ export default function UserManagementPage() {
       ) : (
         Object.entries(roleLabels).map(([role, label]) => (
           <div key={role}>
-            <button
-              onClick={() => toggleRole(role)}
-              className="text-lg font-bold mb-2 w-full text-left"
-            >
-              {label}（{groupedUsers[role]?.length ?? 0}人）{" "}
-              <span>{expandedRoles[role] ? "▲" : "▼"}</span>
-            </button>
+            {/* 👇 見出し + トグルを横に並べる */}
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-lg font-semibold">
+                {label}（{groupedUsers[role]?.length ?? 0}人）
+              </h2>
+              <button
+                onClick={() => toggleRole(role)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                {expandedRoles[role] ? "▲" : "▼"}
+              </button>
+            </div>
 
+            {/* ユーザー一覧カード */}
             {expandedRoles[role] && (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    {(groupedUsers[role] ?? []).map((u) => (
-      <Card key={u.id} className="h-full">
-        <CardHeader className="flex justify-between items-center">
-          <CardTitle>{u.name}</CardTitle>
-          <div className="flex gap-2">
-            <button
-              onClick={() => openEditModal(u)}
-              className="text-sm px-2 py-1 bg-blue-500 text-white rounded"
-            >
-              編集
-            </button>
-            <button
-              onClick={() => handleDelete(u.id)}
-              className="text-sm px-2 py-1 bg-red-500 text-white rounded"
-            >
-              削除
-            </button>
-          </div>
-        </CardHeader>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(groupedUsers[role] ?? []).map((u) => (
+                  <Card key={u.id} className="h-full shadow-sm border">
+                    <CardHeader className="flex justify-between items-start pb-2">
+                      <div>
+                        <CardTitle className="text-base font-semibold">{u.name}</CardTitle>
+                        <p className="text-xs text-gray-500">{u.email}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEditModal(u)}
+                        >
+                          編集
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-300 hover:bg-red-50"
+                          onClick={() => handleDelete(u.id)}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </CardHeader>
 
-        <CardContent className="text-sm space-y-1">
-          <p><strong>メール：</strong>{u.email}</p>
-          <p>
-            <strong>ロール：</strong>
-            <span className={getRoleStyle(u.role)}>{u.role}</span>
-          </p>
-          <p><strong>登録日：</strong>{format(new Date(u.createdAt), "yyyy/MM/dd")}</p>
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-)}
-
+                    <CardContent className="text-sm space-y-1 pt-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">ロール：</span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded ${getRoleStyle(u.role)}`}
+                        >
+                          {u.role}
+                        </span>
+                      </div>
+                      <div className="text-gray-600">
+                        登録日：{format(new Date(u.createdAt), "yyyy/MM/dd")}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         ))
       )}
@@ -164,7 +181,7 @@ export default function UserManagementPage() {
           user={selectedUser}
           isOpen={isModalOpen}
           onClose={closeEditModal}
-          onSave={fetchUsers} // 更新したら一覧を再取得
+          onSave={fetchUsers}
         />
       )}
     </div>
