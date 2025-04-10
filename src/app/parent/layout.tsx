@@ -33,10 +33,10 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
   
           <div className="text-sm md:text-base text-gray-700 font-medium">
             ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
-            <Button variant="outline" onClick={() => router.push("/parent/parent-dashboard")}>お知らせ</Button>
+            {/* <Button variant="outline" onClick={() => router.push("/parent/parent-dashboard")}>お知らせ</Button> */}
             <Button variant="outline" onClick={() => router.push("/parent/reservations")}>予約管理</Button>
             <Button variant="outline" onClick={() => router.push("/parent/billing")}>請求確認</Button>
-            <Button variant="outline" onClick={() => router.push("/parent/profile")}>プロフィール</Button>
+            {/* <Button variant="outline" onClick={() => router.push("/parent/profile")}>プロフィール</Button> */}
           </div>
   
           <LogoutButton />

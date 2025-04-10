@@ -34,9 +34,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
           <Button variant="outline" onClick={() => router.push("/admin/calendar")}>カレンダー管理</Button>
           <Button variant="outline" onClick={() => router.push("/admin/user-management")}>ユーザー管理</Button>
-          <Button variant="outline" onClick={() => router.push("/admin/reservations")}>利用日確認</Button>
+          {/* <Button variant="outline" onClick={() => router.push("/admin/reservations")}>利用日確認</Button> */}
           <Button variant="outline" onClick={() => router.push("/admin/billing")}>請求管理</Button>
-          <Button variant="outline" onClick={() => router.push("/admin/announcements")}>お知らせ</Button>
+          {/* <Button variant="outline" onClick={() => router.push("/admin/announcements")}>お知らせ</Button> */}
         </div>
 
         <LogoutButton />
