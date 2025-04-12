@@ -1,4 +1,3 @@
-// src/app/api/admin/invoice/calculate/route.ts
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -31,7 +30,7 @@ export async function GET(req: Request) {
       }
     });
 
-    // ③ スポット予約を取得（type: "spot"）
+    // ③ スポット予約を取得
     const start = new Date(`${month}-01`);
     const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
     const spotReservations = await prisma.reservation.findMany({
@@ -42,46 +41,46 @@ export async function GET(req: Request) {
       }
     });
 
-    // ④ MonthlyOptionUsage を取得
+    // ④ オプション利用状況を取得
     const optionUsages = await prisma.monthlyOptionUsage.findMany({
       where: { childId, month }
     });
-    console.log("📦 optionUsages:", optionUsages); 
 
-   // ⑤ 各料金を計算
+    // ⑤ 各料金を取得
     const weeklyCount = basicUsage?.weeklyCount || 0;
-
-    // Prisma の Json 型に型アサーションを加えて扱いやすくする
     const basicPrices = billingSetting.basicPrices as Record<string, number>;
     const spotPrices = billingSetting.spotPrices as Record<string, number>;
     const optionPrices = billingSetting.optionPrices as Record<string, number>;
 
-    // 基本料金（週利用回数に応じた単価）
     const basicPrice = basicPrices[String(weeklyCount)] ?? 0;
-
-    // スポット料金（1日単価 × 利用回数）
     const spotCount = spotReservations.length;
     const spotUnit = spotPrices["full"] ?? 0;
     const spotTotal = spotCount * spotUnit;
 
-    // オプションごとの内訳（{ type: { quantity, unitPrice } }）
+    // 🔧 オプションの初期化（全てのオプションを quantity: 0 で入れておく）
     const optionBreakdown: Record<string, { quantity: number; unitPrice: number }> = {};
+    for (const [optionType, unitPrice] of Object.entries(optionPrices)) {
+      optionBreakdown[optionType] = {
+        quantity: 0,
+        unitPrice,
+      };
+    }
 
+    // 🔧 実際に使われたオプションがあれば、上書き
     for (const usage of optionUsages) {
       const unitPrice = optionPrices[usage.optionType] ?? 0;
       optionBreakdown[usage.optionType] = {
         quantity: usage.count,
-        unitPrice
+        unitPrice,
       };
     }
 
-    // breakdown を組み立て
+    // 🔧 breakdown を組み立て
     const breakdown = {
       basic: { quantity: weeklyCount, unitPrice: basicPrice },
       spot: { quantity: spotCount, unitPrice: spotUnit },
       options: optionBreakdown
     };
-    console.log(breakdown)
 
     // 合計金額の計算
     const optionTotal = Object.values(optionBreakdown).reduce(
@@ -96,7 +95,7 @@ export async function GET(req: Request) {
       version: billingSetting.version,
       breakdown,
       total,
-      weeklyCount 
+      weeklyCount
     });
 
   } catch (err) {

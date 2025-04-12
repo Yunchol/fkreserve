@@ -85,6 +85,9 @@ export default function InvoicePreview({
     : "未確定";
   const dueDate = "2025-06-10";
 
+  console.log("💡 breakdown.options:", breakdown.options);
+
+
   return (
     <div>
       <div
