@@ -24,6 +24,7 @@ type Props = {
   breakdown: Breakdown;
   weeklyCount: number;
   note?: string;
+  onNoteChange?: (note: string) => void; // ✅ カスタムプロップ
   finalizedAt?: string;
   readonly?: boolean;
   showPrintButton?: boolean;
@@ -37,6 +38,7 @@ export default function InvoicePreview({
   breakdown,
   weeklyCount,
   note = "",
+  onNoteChange, // ✅ ← ここが足りてなかった！
   finalizedAt,
   readonly = true,
   showPrintButton = true,
@@ -45,16 +47,8 @@ export default function InvoicePreview({
 
   const basicUnitPrice = breakdown.basic?.unitPrice ?? 0;
 
-  // 固定表示順のオプション名（日本語）
-  const fixedOptions = [
-    "昼食",
-    "夕食",
-    "習い事送迎",
-    "自宅送迎",
-    "学校送迎",
-  ];
+  const fixedOptions = ["昼食", "夕食", "習い事送迎", "自宅送迎", "学校送迎"];
 
-  // 日本語ラベル → 英語キーの逆引きマップ
   const optionLabelToKey: Record<string, string> = {
     "昼食": "lunch",
     "夕食": "dinner",
@@ -185,6 +179,7 @@ export default function InvoicePreview({
                 const lineCount = newValue.split("\n").length;
                 if (lineCount <= 3 && newValue.length <= 200) {
                   setEditableNote(newValue);
+                  onNoteChange?.(newValue); // ✅ 親に通知！
                 }
               }}
               className="w-full border rounded p-2 text-sm"

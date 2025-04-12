@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import InvoicePreview from "@/components/InvoicePreview";
@@ -112,6 +113,7 @@ export default function BillingDetailPage() {
         breakdown={invoiceData.breakdown}
         weeklyCount={invoiceData.weeklyCount}
         note={note}
+        onNoteChange={setNote} // ← ここを追加
         finalizedAt={invoiceData.finalizedAt}
         readonly={isFinalized}
         showPrintButton={isFinalized}
