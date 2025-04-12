@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import ReservationCalendar from "@/components/ReservationCalendar";
 import { useChildStore } from "@/stores/childStore";
@@ -9,6 +8,8 @@ import { postReservation } from "@/lib/api/reservation";
 import ReservationModal from "@/components/ReservationModal";
 import { DateClickArg } from "@fullcalendar/interaction";
 import { Reservation, ReservationOption } from "@/types/reservation"; // 型をインポート
+import { format } from "date-fns";
+
 
 type Child = {
   id: string;
@@ -22,6 +23,23 @@ export default function CalendarEditPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+
+    // 📅 FullCalendar に渡す来月の日付範囲
+  const startOfNextMonth = new Date();
+  startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
+  startOfNextMonth.setDate(1);
+
+  const endOfNextMonth = new Date(
+    startOfNextMonth.getFullYear(),
+    startOfNextMonth.getMonth() + 1,
+    0
+  );
+
+  const nextMonthStr = format(startOfNextMonth, "yyyy-MM"); // 例："2025-05"
+
+// ❌ 来月以外なら無効
+const isDisabledDate = (dateStr: string) => !dateStr.startsWith(nextMonthStr);
+
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -165,15 +183,17 @@ export default function CalendarEditPage() {
       <h1 className="text-xl font-semibold mb-4">予約カレンダー（編集）</h1>
       {selectedChild ? (
         <ReservationCalendar
-          reservations={selectedChild.reservations}
-          editable
-          allowClick
-          allowEventClick
-          mode="edit" // 編集モード指定
-          onDateClick={handleDateClick}
-          onReservationMove={handleReservationMove}
-          onEventClick={handleEventClick}
-        />
+        reservations={selectedChild.reservations}
+        editable
+        allowClick
+        allowEventClick
+        mode="edit"
+        onDateClick={handleDateClick}
+        onReservationMove={handleReservationMove}
+        onEventClick={handleEventClick}
+        disabledDateFn={isDisabledDate} // ← 追加
+      />
+      
       ) : (
         <p>子どもを選択してください</p>
       )}

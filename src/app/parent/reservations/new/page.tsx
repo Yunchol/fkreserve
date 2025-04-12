@@ -352,5 +352,3 @@ export default function NewReservationPage() {
   
 }
 
-//新規作成のロジックもう一度考える
-//api連携が少し複雑になってきた

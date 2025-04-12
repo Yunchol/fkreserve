@@ -1,11 +1,9 @@
 "use client";
 
-
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import { useEffect, useState } from "react";
-// import { EventDropArg, EventClickArg } from "@fullcalendar/core";
 import { format } from "date-fns";
 import { Reservation, ReservationOption } from "@/types/reservation";
 
@@ -18,6 +16,7 @@ type Props = {
   onReservationMove?: (reservationId: string, newDateStr: string) => void;
   onEventClick?: (reservationId: string) => void;
   mode?: "new" | "edit";
+  disabledDateFn?: (dateStr: string) => boolean; // ← 追加
 };
 
 export default function ReservationCalendar({
@@ -29,6 +28,7 @@ export default function ReservationCalendar({
   onReservationMove,
   onEventClick,
   mode = "new",
+  disabledDateFn,
 }: Props) {
   const [events, setEvents] = useState<any[]>([]);
 
@@ -56,7 +56,6 @@ export default function ReservationCalendar({
         start: res.date,
         allDay: true,
       };
-      
     });
 
     setEvents(mapped);
@@ -65,12 +64,13 @@ export default function ReservationCalendar({
   const isSameDay = (a: string | Date, b: string | Date) =>
     format(new Date(a), "yyyy-MM-dd") === format(new Date(b), "yyyy-MM-dd");
 
+  // カレンダー初期表示の開始・終了（来月1日〜末日）
   const today = new Date();
   const firstDayNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   const lastDayNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
   const calendarStart = format(firstDayNextMonth, "yyyy-MM-dd");
-  const calendarEnd = mode === "new" ? format(lastDayNextMonth, "yyyy-MM-dd") : undefined;
+  const calendarEnd = format(lastDayNextMonth, "yyyy-MM-dd");
 
   return (
     <div className="p-4 bg-white shadow rounded">
@@ -84,8 +84,11 @@ export default function ReservationCalendar({
         height="auto"
         validRange={{ start: calendarStart, end: calendarEnd }}
         dateClick={(info) => {
+          const dateStr = info.dateStr;
           if (!allowClick || !onDateClick) return;
-          const alreadyExists = reservations.some((r) => isSameDay(r.date, info.dateStr));
+          if (disabledDateFn?.(dateStr)) return;
+
+          const alreadyExists = reservations.some((r) => isSameDay(r.date, dateStr));
           if (alreadyExists) {
             alert("この日はすでに予約があります");
             return;
@@ -103,10 +106,15 @@ export default function ReservationCalendar({
           }
 
           const targetDate = info.event.start!;
-          const reservationId = info.event.id;
+          const dateStr = format(targetDate, "yyyy-MM-dd");
+
+          if (disabledDateFn?.(dateStr)) {
+            info.revert();
+            return;
+          }
 
           const isDuplicate = reservations.some(
-            (r) => isSameDay(r.date, targetDate) && r.id !== reservationId
+            (r) => isSameDay(r.date, dateStr) && r.id !== info.event.id
           );
 
           if (isDuplicate) {
@@ -115,23 +123,31 @@ export default function ReservationCalendar({
             return;
           }
 
-          onReservationMove(reservationId, format(targetDate, "yyyy-MM-dd"));
+          onReservationMove(info.event.id, dateStr);
         }}
         eventAllow={(dropInfo, draggedEvent) => {
           if (!editable || !draggedEvent) return false;
-          const targetDate = dropInfo.start;
-          const reservationId = draggedEvent.id;
+          const dateStr = format(dropInfo.start, "yyyy-MM-dd");
 
+          if (disabledDateFn?.(dateStr)) return false;
+
+          const reservationId = draggedEvent.id;
           return !reservations.some(
-            (r) => isSameDay(r.date, targetDate) && r.id !== reservationId
+            (r) => isSameDay(r.date, dateStr) && r.id !== reservationId
           );
+        }}
+        dayCellClassNames={(arg) => {
+          const dateStr = format(arg.date, "yyyy-MM-dd");
+          if (disabledDateFn?.(dateStr)) {
+            return ["bg-gray-100", "text-gray-400", "cursor-not-allowed"];
+          }
+          return [];
         }}
         eventContent={(arg) => {
           return {
             html: `<div style="white-space: normal; font-size: 0.85rem;">${arg.event.title}</div>`,
           };
         }}
-        
       />
     </div>
   );
