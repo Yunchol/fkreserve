@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 type BillingEntry = {
   id: string;
   name: string;
+  month: string; // ← 追加
   total: number | null;
   confirmed: boolean;
 };
@@ -37,7 +38,7 @@ export default function BillingPage() {
       if (!res.ok) throw new Error("データ取得に失敗しました");
 
       const data = await res.json();
-      setBillingList(data);
+      setBillingList(data); // ← month付きで返ってくる想定
     } catch (err) {
       setError("一覧の取得に失敗しました");
       setBillingList([]);
@@ -46,8 +47,8 @@ export default function BillingPage() {
     }
   };
 
-  const handleDetailClick = (childId: string) => {
-    router.push(`/admin/billing/${childId}?month=${selectedMonth}`);
+  const handleDetailClick = (childId: string, month: string) => {
+    router.push(`/admin/billing/${childId}?month=${month}`);
   };
 
   return (
@@ -105,6 +106,7 @@ export default function BillingPage() {
               <thead className="bg-gray-100 text-gray-700">
                 <tr>
                   <th className="px-4 py-2 text-left border-b">名前</th>
+                  <th className="px-4 py-2 text-left border-b">請求月</th>
                   <th className="px-4 py-2 text-right border-b">合計金額</th>
                   <th className="px-4 py-2 text-center border-b">状態</th>
                   <th className="px-4 py-2 text-center border-b">操作</th>
@@ -112,8 +114,9 @@ export default function BillingPage() {
               </thead>
               <tbody>
                 {billingList.map((child) => (
-                  <tr key={child.id} className="hover:bg-gray-50">
+                  <tr key={`${child.id}-${child.month}`} className="hover:bg-gray-50">
                     <td className="px-4 py-2 border-b">{child.name}</td>
+                    <td className="px-4 py-2 border-b">{child.month}</td>
                     <td className="px-4 py-2 text-right border-b">
                       {child.confirmed && child.total !== null
                         ? `¥${child.total.toLocaleString()}`
@@ -132,7 +135,7 @@ export default function BillingPage() {
                     </td>
                     <td className="px-4 py-2 text-center border-b">
                       <button
-                        onClick={() => handleDetailClick(child.id)}
+                        onClick={() => handleDetailClick(child.id, child.month)}
                         className="text-blue-600 hover:underline"
                       >
                         詳細
