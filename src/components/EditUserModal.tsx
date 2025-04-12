@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { User } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { Pencil, Trash2, X, ImagePlus } from "lucide-react"; 
 
 type Props = {
   user: User;
@@ -69,6 +70,32 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
     }
   };
 
+  const handleImageDelete = async () => {
+    if (!formData.imageUrl) return;
+  
+    try {
+      const res = await fetch("/api/users/delete-profile-image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          imageUrl: formData.imageUrl,
+        }),
+      });
+  
+      const result = await res.json();
+      if (result.success) {
+        setFormData((prev) => ({ ...prev, imageUrl: "" }));
+      } else {
+        alert("削除に失敗しました");
+      }
+    } catch (err) {
+      console.error("削除エラー:", err);
+      alert("画像削除中にエラーが発生しました");
+    }
+  };
+  
+
   if (!isOpen) return null;
 
   return (
@@ -78,38 +105,50 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
 
         <div className="space-y-4">
           {/* プロフィール画像 */}
-          <div className="text-center">
-            <div className="relative inline-block">
-              <label className="cursor-pointer group">
-                <div className="w-28 h-28 rounded-full overflow-hidden border shadow">
-                  {uploading ? (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
-                    </div>
-                  ) : formData.imageUrl ? (
-                    <img
-                      src={formData.imageUrl}
-                      alt="プロフィール画像"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                      画像なし
-                    </div>
-                  )}
-                </div>
-                <div className="mt-2 text-sm text-blue-600 group-hover:underline">
-                  画像を変更する
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              プロフィール画像
+            </label>
+
+            {formData.imageUrl ? (
+              <div className="relative w-24 h-24 mb-2">
+                <img
+                  src={formData.imageUrl}
+                  alt="プロフィール画像"
+                  className="w-24 h-24 object-cover rounded-full border"
                 />
-              </label>
-            </div>
+                {/* 削除ボタン */}
+                <button
+                  type="button"
+                  onClick={handleImageDelete} // ← これに変更！
+                  className="absolute -top-2 -right-2 bg-white border border-gray-300 rounded-full p-1 hover:bg-red-100"
+                >
+                  <X className="w-4 h-4 text-red-600" />
+                </button>
+
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 mb-2">画像が未設定です</p>
+            )}
+
+            {/* アップロードボタン */}
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-blue-600 hover:underline">
+              <ImagePlus className="w-4 h-4" />
+              画像を選択
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+
+            {uploading && (
+              <p className="text-xs text-gray-500 mt-1">アップロード中...</p>
+            )}
           </div>
+
 
           {/* 名前 */}
           <div>
