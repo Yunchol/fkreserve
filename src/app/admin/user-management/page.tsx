@@ -112,7 +112,7 @@ export default function UserManagementPage() {
       ) : (
         Object.entries(roleLabels).map(([role, label]) => (
           <div key={role}>
-            {/* 👇 見出し + トグルを横に並べる */}
+            {/* 見出し + トグル */}
             <div className="flex items-center gap-2 mb-2">
               <h2 className="text-lg font-semibold">
                 {label}（{groupedUsers[role]?.length ?? 0}人）
@@ -125,14 +125,23 @@ export default function UserManagementPage() {
               </button>
             </div>
 
-            {/* ユーザー一覧カード */}
+            {/* カード表示 */}
             {expandedRoles[role] && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(groupedUsers[role] ?? []).map((u) => (
                   <Card key={u.id} className="h-full shadow-sm border">
                     <CardHeader className="flex justify-between items-start pb-2">
                       <div>
-                        <CardTitle className="text-base font-semibold">{u.name}</CardTitle>
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                          {u.imageUrl && (
+                            <img
+                              src={u.imageUrl}
+                              alt="プロフィール"
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          )}
+                          {u.name}
+                        </CardTitle>
                         <p className="text-xs text-gray-500">{u.email}</p>
                       </div>
                       <div className="flex gap-1">
@@ -157,9 +166,7 @@ export default function UserManagementPage() {
                     <CardContent className="text-sm space-y-1 pt-0">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-600">ロール：</span>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded ${getRoleStyle(u.role)}`}
-                        >
+                        <span className={`text-xs px-2 py-0.5 rounded ${getRoleStyle(u.role)}`}>
                           {u.role}
                         </span>
                       </div>

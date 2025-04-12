@@ -6,7 +6,7 @@ export type User = {
     role: "admin" | "parent" | "staff" | "pending";
     profileCompleted: boolean;
     createdAt: string; // DateでもOK、APIレスポンスならstringが安心
-
+    imageUrl?: string;
   };
   
   

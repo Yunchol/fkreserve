@@ -12,14 +12,45 @@ type Props = {
 };
 
 export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) {
-  const [formData, setFormData] = useState<User>(user);
+  const [formData, setFormData] = useState<User>({ ...user, imageUrl: user.imageUrl ?? "" });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    setFormData({ ...user, role: user.role || "pending" }); // ← 初期値をpendingに
+    setFormData({
+      ...user,
+      imageUrl: user.imageUrl ?? "",
+      role: user.role || "pending",
+    });
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const form = new FormData();
+    form.append("file", file);
+    form.append("userId", user.id);
+
+    setUploading(true);
+    try {
+      const res = await fetch("/api/users/upload-profile-image", {
+        method: "POST",
+        body: form,
+      });
+
+      const data = await res.json();
+      if (data.imageUrl) {
+        setFormData((prev) => ({ ...prev, imageUrl: data.imageUrl }));
+      }
+    } catch {
+      alert("画像のアップロードに失敗しました");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -45,6 +76,25 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
         <h2 className="text-xl font-bold mb-4 text-gray-800">ユーザー編集</h2>
 
         <div className="space-y-4">
+          {/* プロフィール画像 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">プロフィール画像</label>
+            {formData.imageUrl && (
+              <img
+                src={formData.imageUrl}
+                alt="プロフィール画像"
+                className="w-24 h-24 object-cover rounded-full mb-2"
+              />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={uploading}
+            />
+            {uploading && <p className="text-xs text-gray-500 mt-1">アップロード中...</p>}
+          </div>
+
           {/* 名前 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">名前</label>

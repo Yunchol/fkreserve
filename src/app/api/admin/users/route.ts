@@ -25,7 +25,7 @@ export async function GET() {
       return NextResponse.json({ error: "権限がありません" }, { status: 401 });
     }
 
-    // 全ユーザー取得
+    // 全ユーザー取得（✅ imageUrlを含めるように修正）
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -34,6 +34,7 @@ export async function GET() {
         email: true,
         role: true,
         createdAt: true,
+        imageUrl: true, // ✅ ここを追加！
       },
     });
 
