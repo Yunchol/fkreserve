@@ -45,7 +45,7 @@ export async function GET() {
   }
 }
 
-// ✅ POST: 単体 or 一括登録（BasicUsage付き）
+
 export async function POST(req: Request) {
   try {
     const token = (await cookies()).get("token")?.value;
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
 
     const userId = payload.userId;
-    // ✅ 1回だけ await req.json() して、そこに型をつける
+
     const body: {
       childId: string;
       date?: string;
@@ -78,23 +78,22 @@ export async function POST(req: Request) {
       optionSummary,
     } = body;
 
-
-
     // ✅ 子どもの所有者チェック
     const child = await prisma.child.findUnique({ where: { id: childId } });
     if (!child || child.parentId !== userId) {
       return NextResponse.json({ error: "不正な子どもID" }, { status: 403 });
     }
 
-    // ✅ 一括登録（+ BasicUsage の保存）
+    // ✅ 一括登録の場合（新規予約作成画面から）
     if (Array.isArray(reservations)) {
       if (!month || !basicUsage) {
         return NextResponse.json({ error: "月情報または利用プランが不足しています" }, { status: 400 });
       }
 
-      // 🔹 一括予約と BasicUsage をトランザクションで保存
-      await prisma.$transaction([
-        // ① 既存予約を削除
+      const ops: any[] = [];
+
+      // ① 既存の予約を削除（来月分）
+      ops.push(
         prisma.reservation.deleteMany({
           where: {
             childId,
@@ -103,14 +102,14 @@ export async function POST(req: Request) {
               lt: new Date(`${month}-31`),
             },
           },
-        }),
-        // ② BasicUsage を upsert
+        })
+      );
+
+      // ② BasicUsage を upsert（利用プラン）
+      ops.push(
         prisma.basicUsage.upsert({
           where: {
-            childId_month: {
-              childId,
-              month,
-            },
+            childId_month: { childId, month },
           },
           update: {
             weeklyCount: basicUsage.weeklyCount,
@@ -122,9 +121,12 @@ export async function POST(req: Request) {
             weeklyCount: basicUsage.weeklyCount,
             weekdays: basicUsage.weekdays,
           },
-        }),
-        // ③ 予約データをすべて作成
-        ...reservations.map((r) =>
+        })
+      );
+
+      // ③ 予約データをすべて登録
+      for (const r of reservations) {
+        ops.push(
           prisma.reservation.create({
             data: {
               childId,
@@ -140,37 +142,42 @@ export async function POST(req: Request) {
               },
             },
           })
-        ),
-      ]);
+        );
+      }
 
-      // ✅ 追加処理：MonthlyOptionUsage の保存
+      // ④ 月次オプション利用集計（MonthlyOptionUsage）も追加
       if (optionSummary && typeof optionSummary === "object") {
         for (const [monthKey, options] of Object.entries(optionSummary)) {
           for (const [optionType, count] of Object.entries(options)) {
-            await prisma.monthlyOptionUsage.upsert({
-              where: {
-                childId_month_optionType: {
+            ops.push(
+              prisma.monthlyOptionUsage.upsert({
+                where: {
+                  childId_month_optionType: {
+                    childId,
+                    month: monthKey,
+                    optionType,
+                  },
+                },
+                update: { count },
+                create: {
                   childId,
                   month: monthKey,
                   optionType,
+                  count,
                 },
-              },
-              update: { count },
-              create: {
-                childId,
-                month: monthKey,
-                optionType,
-                count,
-              },
-            });
+              })
+            );
           }
         }
       }
 
+      // ✅ トランザクション実行（全部成功すれば反映、失敗ならロールバック）
+      await prisma.$transaction(ops);
+
       return NextResponse.json({ success: true });
     }
 
-    // ✅ 単体予約の作成（個別登録）
+    // ✅ 単体登録（個別予約）
     if (!date || !type || !Array.isArray(options)) {
       return NextResponse.json({ error: "パラメータ不足" }, { status: 400 });
     }
@@ -205,6 +212,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
   }
 }
+
 
 
 export async function PATCH(req: Request) {
