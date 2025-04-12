@@ -14,6 +14,7 @@ export async function POST(req: Request) {
       note, // ✅ 備考も受け取る
     } = await req.json();
 
+    
     if (!childId || !month || !breakdown || !version || total == null) {
       return NextResponse.json({ error: "必要なパラメータが不足しています" }, { status: 400 });
     }

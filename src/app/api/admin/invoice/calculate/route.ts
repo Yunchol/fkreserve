@@ -46,6 +46,7 @@ export async function GET(req: Request) {
     const optionUsages = await prisma.monthlyOptionUsage.findMany({
       where: { childId, month }
     });
+    console.log("📦 optionUsages:", optionUsages); 
 
    // ⑤ 各料金を計算
     const weeklyCount = basicUsage?.weeklyCount || 0;
@@ -80,6 +81,7 @@ export async function GET(req: Request) {
       spot: { quantity: spotCount, unitPrice: spotUnit },
       options: optionBreakdown
     };
+    console.log(breakdown)
 
     // 合計金額の計算
     const optionTotal = Object.values(optionBreakdown).reduce(
