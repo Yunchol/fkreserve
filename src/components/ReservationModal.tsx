@@ -11,8 +11,6 @@ type Props = {
   onDelete?: (reservationId: string) => void;
 };
 
-
-// 🔸送迎キーを定義
 const CAR_KEYS = ["schoolCar", "homeCar", "lessonCar"] as const;
 
 export default function ReservationModal({
@@ -22,7 +20,7 @@ export default function ReservationModal({
   onSubmit,
   onDelete,
 }: Props) {
-  const [type] = useState<"spot">("spot"); // 固定
+  const [type, setType] = useState<"basic" | "spot">("spot");
   const [lunch, setLunch] = useState(false);
   const [dinner, setDinner] = useState(false);
 
@@ -31,11 +29,11 @@ export default function ReservationModal({
     homeCar: { enabled: false, count: 1, time: "" },
     lessonCar: { enabled: false, count: 1, name: "", time: "" },
   });
-  
 
   useEffect(() => {
     if (editingReservation) {
       const opts = editingReservation.options as any;
+      setType(editingReservation.type); // ★ typeをセット
       setLunch(!!opts?.lunch);
       setDinner(!!opts?.dinner);
       if (opts?.car) setCarOptions(opts.car);
@@ -57,18 +55,18 @@ export default function ReservationModal({
           {date} の{editingReservation ? "予約編集" : "新規予約"}
         </h2>
 
-        {/* 利用タイプ（スポット固定） */}
+        {/* 利用タイプ */}
         <div>
           <label className="block mb-1 font-medium">利用タイプ</label>
           <input
             type="text"
-            value="スポット利用"
+            value={type === "basic" ? "基本利用" : "スポット利用"}
             disabled
             className="w-full border p-2 rounded bg-gray-100 text-gray-600"
           />
         </div>
 
-        {/* 昼食・夕食 */}
+        {/* 食事オプション */}
         <div>
           <label className="block font-medium mb-1">オプション（食事）</label>
           <label className="block text-sm">
@@ -91,7 +89,7 @@ export default function ReservationModal({
           </label>
         </div>
 
-        {/* 送迎 */}
+        {/* 送迎オプション */}
         <div>
           <label className="block font-medium mb-1">送迎オプション</label>
           {CAR_KEYS.map((key) => {
@@ -139,7 +137,7 @@ export default function ReservationModal({
                     {key === "lessonCar" && (
                       <input
                         type="text"
-                        value={carOptions.lessonCar.name ?? ""} // ← ここを修正！
+                        value={carOptions.lessonCar.name ?? ""}
                         onChange={(e) =>
                           setCarOptions((prev) => ({
                             ...prev,
