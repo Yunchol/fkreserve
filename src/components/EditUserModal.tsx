@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { User } from "@/types/user";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 type Props = {
   user: User;
@@ -77,22 +78,37 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
 
         <div className="space-y-4">
           {/* プロフィール画像 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">プロフィール画像</label>
-            {formData.imageUrl && (
-              <img
-                src={formData.imageUrl}
-                alt="プロフィール画像"
-                className="w-24 h-24 object-cover rounded-full mb-2"
-              />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              disabled={uploading}
-            />
-            {uploading && <p className="text-xs text-gray-500 mt-1">アップロード中...</p>}
+          <div className="text-center">
+            <div className="relative inline-block">
+              <label className="cursor-pointer group">
+                <div className="w-28 h-28 rounded-full overflow-hidden border shadow">
+                  {uploading ? (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+                    </div>
+                  ) : formData.imageUrl ? (
+                    <img
+                      src={formData.imageUrl}
+                      alt="プロフィール画像"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                      画像なし
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 text-sm text-blue-600 group-hover:underline">
+                  画像を変更する
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
 
           {/* 名前 */}
