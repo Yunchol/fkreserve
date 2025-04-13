@@ -73,10 +73,3 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     return NextResponse.json({ message: "更新成功", user: updated });
   }
   
-
-  //注意
-//   このコードには認証も認可も入っていないので、
-// 誰でも（ログインしてない人でも）
-// 他人のIDを入れれば（adminじゃなくても）
-// 他人のアカウントを見れる / 消せる / 書き換えられる
-// という 超危険な状態になる！
