@@ -6,7 +6,7 @@ type Props = {
   weeklyUsage: number;
   setWeeklyUsage: (count: number) => void;
   selectedDays: { [key: string]: boolean };
-  setSelectedDays: (days: { [key: string]: boolean }) => void;
+  setSelectedDays: React.Dispatch<React.SetStateAction<{ [key: string]: boolean }>>;
 };
 
 const DAYS = ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日"];
@@ -21,7 +21,7 @@ export default function Step1({
     setSelectedDays((prev) => {
       const currentCount = Object.values(prev).filter(Boolean).length;
       const isSelected = prev[day] ?? false;
-  
+
       // すでに選択済 → OFF にする
       if (isSelected) {
         return {
@@ -29,13 +29,13 @@ export default function Step1({
           [day]: false,
         };
       }
-  
+
       // 未選択だが上限に達してる → 拒否
       if (currentCount >= weeklyUsage) {
         alert(`週${weeklyUsage}回なので${weeklyUsage}つまで選択できます`);
         return prev;
       }
-  
+
       // 未選択かつ上限未満 → ON にする
       return {
         ...prev,
@@ -43,7 +43,6 @@ export default function Step1({
       };
     });
   };
-  
 
   return (
     <div className="space-y-4">
@@ -55,6 +54,7 @@ export default function Step1({
           onChange={(e) => {
             const value = parseInt(e.target.value);
             setWeeklyUsage(value);
+
             // 曜日リセット
             const resetDays: { [key: string]: boolean } = {};
             DAYS.forEach((day) => (resetDays[day] = false));
