@@ -1,34 +1,50 @@
-// app/api/users/upload-profile-image/route.ts
-import { NextResponse } from "next/server";
-import { IncomingForm } from "formidable";
-import fs from "fs";
-import path from "path";
 import { prisma } from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
 
-// appDirではbodyのstream処理が必要
+// Supabase client 作成（server-side用）
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export async function POST(req: Request) {
-  const data = await req.formData();
-  const file = data.get("file") as File;
-  const userId = data.get("userId") as string;
+  const formData = await req.formData();
+  const file = formData.get("file") as File;
+  const userId = formData.get("userId") as string;
 
   if (!file || !userId) {
-    return NextResponse.json({ error: "file または userId がありません" }, { status: 400 });
+    return NextResponse.json({ error: "ファイルまたはユーザーIDがありません" }, { status: 400 });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const filename = `${Date.now()}-${file.name}`;
-  const filepath = path.join(process.cwd(), "public/uploads", filename);
-  const imageUrl = `/uploads/${filename}`;
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  await fs.promises.writeFile(filepath, buffer);
+  // Supabaseにアップロード
+  const { data, error } = await supabase.storage
+    .from("user-images") // ← ここはStorageバケット名
+    .upload(fileName, fileBuffer, {
+      contentType: file.type,
+      upsert: true,
+    });
 
-  // DBに保存（UserにimageUrlを追加している前提）
+  if (error) {
+    console.error("Upload error:", error);
+    return NextResponse.json({ error: "アップロード失敗" }, { status: 500 });
+  }
+
+  // 画像のパブリックURL取得
+  const { data: publicUrl } = supabase
+    .storage
+    .from("user-images")
+    .getPublicUrl(fileName);
+
+  // DBに保存（Userに imageUrl カラムがある前提）
   await prisma.user.update({
     where: { id: userId },
-    data: { imageUrl },
+    data: { imageUrl: publicUrl.publicUrl },
   });
 
-  return NextResponse.json({ success: true, imageUrl });
+  return NextResponse.json({ success: true, imageUrl: publicUrl.publicUrl });
 }
-
-

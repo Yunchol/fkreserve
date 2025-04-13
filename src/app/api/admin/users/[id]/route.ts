@@ -57,15 +57,22 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
     }
   
-    const { name, email, role } = await req.json();
+    // 👇 imageUrl も受け取る
+    const { name, email, role, imageUrl } = await req.json();
   
     const updated = await prisma.user.update({
       where: { id: params.id },
-      data: { name, email, role },
+      data: {
+        name,
+        email,
+        role,
+        imageUrl, // 👈 ここを追加！
+      },
     });
   
     return NextResponse.json({ message: "更新成功", user: updated });
   }
+  
 
   //注意
 //   このコードには認証も認可も入っていないので、
