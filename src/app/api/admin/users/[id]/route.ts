@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // ✅ ユーザー削除
 export async function DELETE(req: NextRequest, context: any) {
-  const { id } = context.params;
+  const childId = context.params.id;
 
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
@@ -19,14 +19,14 @@ export async function DELETE(req: NextRequest, context: any) {
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  await prisma.user.delete({ where: { id } });
+  await prisma.user.delete({ where: { id: childId } });
 
   return NextResponse.json({ message: "削除完了" });
 }
 
 // ✅ ユーザー取得
 export async function GET(req: NextRequest, context: any) {
-  const { id } = context.params;
+  const childId = context.params.id;
 
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: any) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id },
+    where: { id: childId },
   });
 
   if (!user) {
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, context: any) {
 
 // ✅ ユーザー更新
 export async function PATCH(req: NextRequest, context: any) {
-  const { id } = context.params;
+  const childId = context.params.id;
 
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
@@ -66,7 +66,7 @@ export async function PATCH(req: NextRequest, context: any) {
   const { name, email, role, imageUrl } = await req.json();
 
   const updated = await prisma.user.update({
-    where: { id },
+    where: { id: childId },
     data: {
       name,
       email,
