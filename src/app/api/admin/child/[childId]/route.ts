@@ -1,12 +1,13 @@
-// /api/children/[childId]/route.ts (例)
-//なんかエラー出るけど、一旦大丈夫、paramsが非同期でやれって怒られる
+// /api/children/[childId]/route.ts
 
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(_: Request, { params }: { params: { childId: string } }) {
+export async function GET(req: NextRequest, context: { params: { childId: string } }) {
+  const { childId } = context.params;
+
   const child = await prisma.child.findUnique({
-    where: { id: params.childId },
+    where: { id: childId },
     select: { name: true },
   });
 
