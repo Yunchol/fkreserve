@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
+
 export async function POST(req: Request) {
   try {
     const token = (await cookies()).get("token")?.value;

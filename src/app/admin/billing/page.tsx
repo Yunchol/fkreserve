@@ -53,7 +53,14 @@ export default function BillingPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
+      {/* ページ右上に追加ボタン */}
+    <div className="flex justify-between items-center">
       <h1 className="text-2xl font-bold">請求管理（管理者用）</h1>
+      <Button onClick={() => router.push("/admin/billing/setting")}>
+        料金設定
+      </Button>
+    </div>
+
 
       {/* 🔹 検索フィルター */}
       <div className="flex flex-wrap gap-4 items-end">
@@ -85,6 +92,7 @@ export default function BillingPage() {
         >
           検索する
         </Button>
+        
       </div>
 
       {/* 🔹 エラー表示 */}

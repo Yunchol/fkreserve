@@ -5,23 +5,37 @@ import { useEffect, useState } from "react";
 export default function BillingSettingPage() {
   const [version, setVersion] = useState("2025春");
 
-  const [basicPrices, setBasicPrices] = useState<Record<string, number>>({});
-  const [spotPrices, setSpotPrices] = useState<Record<string, number>>({});
-  const [optionPrices, setOptionPrices] = useState<Record<string, number>>({});
+  // ✅ 初期値を定義
+  const defaultBasicPrices = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+  const defaultSpotPrices = { full: 0, am: 0, pm: 0 };
+  const defaultOptionPrices = {
+    lunch: 0,
+    dinner: 0,
+    school_car: 0,
+    home_car: 0,
+    lesson_car: 0,
+  };
 
+  const [basicPrices, setBasicPrices] = useState<Record<string, number>>(defaultBasicPrices);
+  const [spotPrices, setSpotPrices] = useState<Record<string, number>>(defaultSpotPrices);
+  const [optionPrices, setOptionPrices] = useState<Record<string, number>>(defaultOptionPrices);
   const [history, setHistory] = useState<any[]>([]);
 
-  // 🔸最新の設定＆履歴取得
+  // 🔸 最新の設定＆履歴取得
   useEffect(() => {
     const fetchSettings = async () => {
       const res = await fetch("/api/admin/billing/setting");
       const data = await res.json();
 
       if (data.latest) {
-        setVersion(data.latest.version);
-        setBasicPrices(data.latest.basicPrices);
-        setSpotPrices(data.latest.spotPrices);
-        setOptionPrices(data.latest.optionPrices);
+        setVersion(data.latest.version || "2025春");
+        setBasicPrices({ ...defaultBasicPrices, ...data.latest.basicPrices });
+        setSpotPrices({ ...defaultSpotPrices, ...data.latest.spotPrices });
+        setOptionPrices({ ...defaultOptionPrices, ...data.latest.optionPrices });
+      } else {
+        setBasicPrices(defaultBasicPrices);
+        setSpotPrices(defaultSpotPrices);
+        setOptionPrices(defaultOptionPrices);
       }
 
       if (data.history) {
@@ -73,7 +87,10 @@ export default function BillingSettingPage() {
               type="number"
               value={val}
               onChange={(e) =>
-                setBasicPrices((prev) => ({ ...prev, [key]: parseInt(e.target.value) }))
+                setBasicPrices((prev) => ({
+                  ...prev,
+                  [key]: parseInt(e.target.value) || 0,
+                }))
               }
               className="border p-1 rounded w-32"
             />
@@ -91,7 +108,10 @@ export default function BillingSettingPage() {
               type="number"
               value={val}
               onChange={(e) =>
-                setSpotPrices((prev) => ({ ...prev, [key]: parseInt(e.target.value) }))
+                setSpotPrices((prev) => ({
+                  ...prev,
+                  [key]: parseInt(e.target.value) || 0,
+                }))
               }
               className="border p-1 rounded w-32"
             />
@@ -109,7 +129,10 @@ export default function BillingSettingPage() {
               type="number"
               value={val}
               onChange={(e) =>
-                setOptionPrices((prev) => ({ ...prev, [key]: parseInt(e.target.value) }))
+                setOptionPrices((prev) => ({
+                  ...prev,
+                  [key]: parseInt(e.target.value) || 0,
+                }))
               }
               className="border p-1 rounded w-32"
             />
