@@ -1,11 +1,12 @@
 // src/app/api/users/[id]/route.ts
 
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+// ✅ ユーザー取得
+export async function GET(req: NextRequest, context: any) {
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 
@@ -13,15 +14,16 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   const currentUser = await prisma.user.findUnique({ where: { id: decoded.userId } });
 
   // 本人 or 管理者のみ取得可能
-  if (!currentUser || (currentUser.id !== params.id && currentUser.role !== "admin")) {
+  if (!currentUser || (currentUser.id !== context.params.id && currentUser.role !== "admin")) {
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: params.id } });
+  const user = await prisma.user.findUnique({ where: { id: context.params.id } });
   return NextResponse.json(user);
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// ✅ ユーザー更新
+export async function PUT(req: NextRequest, context: any) {
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 
@@ -29,20 +31,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const currentUser = await prisma.user.findUnique({ where: { id: decoded.userId } });
 
   // 本人 or 管理者のみ編集可能
-  if (!currentUser || (currentUser.id !== params.id && currentUser.role !== "admin")) {
+  if (!currentUser || (currentUser.id !== context.params.id && currentUser.role !== "admin")) {
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
   const body = await req.json();
   const updated = await prisma.user.update({
-    where: { id: params.id },
+    where: { id: context.params.id },
     data: body,
   });
 
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+// ✅ ユーザー削除
+export async function DELETE(req: NextRequest, context: any) {
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
 
@@ -54,6 +57,6 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  const deleted = await prisma.user.delete({ where: { id: params.id } });
+  const deleted = await prisma.user.delete({ where: { id: context.params.id } });
   return NextResponse.json(deleted);
 }
