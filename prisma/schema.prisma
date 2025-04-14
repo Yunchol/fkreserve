@@ -23,7 +23,6 @@ model User {
   children          Child[]  // ✅ 子どもとのリレーション
   createdAt         DateTime @default(now())
   imageUrl  String?
-  imagePath  String? 
 }
 
 model Child {
