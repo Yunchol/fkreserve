@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
 
 export async function DELETE(_: Request, context: { params: { id: string } }) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
