@@ -100,7 +100,7 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
 
           {/* ロール */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ロール</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">権限</label>
             <select
               name="role"
               value={formData.role}

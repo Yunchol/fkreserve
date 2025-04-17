@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 type BillingEntry = {
   id: string;
@@ -99,13 +100,19 @@ export default function BillingPage() {
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       {/* 🔹 結果表示 */}
-      <div className="mt-4">
+      <div className="mt-4 relative min-h-[150px]">
         <h2 className="text-lg font-semibold mb-2">
           検索結果（{selectedMonth || "全期間"}）
         </h2>
 
+        {/* 読み込み中のスピナー */}
         {loading ? (
-          <p>読み込み中...</p>
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="flex flex-col items-center gap-2 text-gray-600">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <p className="text-sm">読み込み中...</p>
+            </div>
+          </div>
         ) : billingList.length === 0 ? (
           <p className="text-gray-600">該当する請求が見つかりませんでした。</p>
         ) : (
@@ -156,6 +163,7 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
     </div>
   );
 }
