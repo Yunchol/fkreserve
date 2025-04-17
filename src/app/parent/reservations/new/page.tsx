@@ -14,7 +14,8 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { postReservations, deleteNextMonthReservations } from "@/lib/api/reservation";
 import { summarizeOptions } from "@/lib/utils/summarizeOptions";
-// UIレイアウトを左右分割に変更
+import { Loader2 } from "lucide-react";
+
 export default function NewReservationPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [calendarEvents, setCalendarEvents] = useState<Reservation[]>([]);
@@ -32,10 +33,10 @@ export default function NewReservationPage() {
 
   const [spotDays, setSpotDays] = useState(0);
   const [spotSelectedDates, setSpotSelectedDates] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>("");
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
   const [children, setChildren] = useState<any[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(true); 
   const { selectedChildId } = useChildStore();
   const selectedChild = children.find((c) => c.id === selectedChildId);
   const router = useRouter();
@@ -51,14 +52,19 @@ export default function NewReservationPage() {
     );
 
 
-  useEffect(() => {
-    const fetchReservations = async () => {
-      const res = await fetch("/api/parent/reservations");
-      const data = await res.json();
-      setChildren(data.children);
-    };
-    fetchReservations();
-  }, []);
+    useEffect(() => {
+      const fetchReservations = async () => {
+        setLoadingChildren(true); // ←開始時
+    
+        const res = await fetch("/api/parent/reservations");
+        const data = await res.json();
+        setChildren(data.children);
+    
+        setLoadingChildren(false); // ←取得完了後
+      };
+      fetchReservations();
+    }, []);
+    
 
   const handleDateClick = (info: DateClickArg) => {
     const clickedDate = info.dateStr;
@@ -177,7 +183,6 @@ export default function NewReservationPage() {
     generateBaseEvents();
   }, [selectedDays]);
   
-  
 
   const handleSave = async () => {
     if (!selectedChildId) {
@@ -229,17 +234,19 @@ export default function NewReservationPage() {
     }
   };
   
-
-  console.log("selectedDays:", selectedDays);
-  console.log("spotDays:", spotDays);
-  console.log("calendarEvents:", calendarEvents);
-  console.log("selectedChildId:", selectedChildId);
-
-  
   return (
     <div className="p-4">
       <h1 className="text-xl font-semibold mb-4">新規予約作成</h1>
-      <ChildSelector children={children} />
+      
+      <div className="relative inline-block min-h-[44px] mb-4">
+        {loadingChildren && (
+          <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+          </div>
+        )}
+        <ChildSelector children={children} />
+      </div>
+
   
       {selectedChild ? (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
