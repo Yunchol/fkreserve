@@ -108,31 +108,38 @@ export default function ParentBillingPage() {
 
       {/* ▼ 請求一覧表示 */}
       {selectedChild && invoices.length > 0 && !loadingInvoices && (
-        <div className="mt-6 space-y-4">
-          {invoices.map((invoice) => (
-            <div key={invoice.id} className="border p-4 rounded shadow-sm bg-white">
-              <p className="text-sm text-gray-600">
-                <strong>対象月:</strong> {invoice.month}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>確定日:</strong>{" "}
-                {new Date(invoice.finalizedAt).toLocaleDateString()}
-              </p>
-              <p className="text-sm text-gray-600">
-                <strong>合計:</strong> ¥{invoice.total.toLocaleString()}
-              </p>
-              <div className="mt-2">
-                <Link
-                  href={`/parent/billing/${selectedChild.id}?month=${invoice.month}`}
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  詳細を見る
-                </Link>
+      <div className="mt-6 grid gap-4">
+        {invoices.map((invoice) => (
+          <div key={invoice.id} className="bg-white border rounded-lg shadow-sm p-4">
+            <div className="space-y-1 text-sm text-gray-700">
+              <div className="flex justify-between">
+                <span className="text-gray-500">対象月</span>
+                <span className="font-medium">{invoice.month}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">確定日</span>
+                <span>{new Date(invoice.finalizedAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">合計金額</span>
+                <span className="font-semibold text-blue-700">
+                  ¥{invoice.total.toLocaleString()}
+                </span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <div className="mt-4 text-right">
+              <Link
+                href={`/parent/billing/${selectedChild.id}?month=${invoice.month}`}
+                className="text-sm text-blue-600 hover:underline font-medium"
+              >
+                詳細を見る →
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
     </div>
   );
 }
