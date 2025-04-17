@@ -40,6 +40,7 @@ export default function NewReservationPage() {
   const { selectedChildId } = useChildStore();
   const selectedChild = children.find((c) => c.id === selectedChildId);
   const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
   //FullCalendarの表示日時範囲
   const startOfNextMonth = new Date();
     startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
@@ -189,6 +190,8 @@ export default function NewReservationPage() {
       alert("お子さまが選択されていません");
       return;
     }
+
+    setIsSaving(true); 
   
     // 来月の年月を文字列で取得（例："2025-05"）
     const now = new Date();
@@ -231,6 +234,8 @@ export default function NewReservationPage() {
     } catch (err) {
       console.error("保存エラー", err);
       alert("保存に失敗しました。");
+    } finally{
+      setIsSaving(false);
     }
   };
   
@@ -317,10 +322,22 @@ export default function NewReservationPage() {
               </button>
             ) : (
               <button
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                className={`px-4 py-2 rounded text-white ${
+                  isSaving
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
                 onClick={handleSave}
+                disabled={isSaving}
               >
-                保存する
+                {isSaving ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    保存中...
+                  </span>
+                ) : (
+                  "保存する"
+                )}
               </button>
             )}
           </div>
