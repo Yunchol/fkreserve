@@ -31,7 +31,7 @@ const Step2 = ({
         <div className="flex items-center gap-2 mb-1">
           <label className="font-medium">スポット利用回数を選択</label>
           {spotDays === 0 && (
-            <span className="text-blue-500 animate-bounce">⬅ こちらから選択！</span>
+            <span className="text-blue-500 animate-bounce">⬇︎ こちらから選択！</span>
           )}
         </div>
         <select

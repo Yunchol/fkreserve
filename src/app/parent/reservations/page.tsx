@@ -46,9 +46,9 @@ export default function ReservationPage() {
 
   useEffect(() => {
     if (!selectedChild) return;
-
+  
     setLoadingCalendar(true);
-
+  
     const timer = setTimeout(() => {
       const mapped = selectedChild.reservations.map((res) => {
         const opts: ReservationOption = res.options ?? {
@@ -60,34 +60,37 @@ export default function ReservationPage() {
             lessonCar: { enabled: false, count: 0, name: "", time: "" },
           },
         };
-
+  
         const parts: string[] = [];
-        if (opts.lunch) parts.push("昼食");
-        if (opts.dinner) parts.push("夕食");
-
+        if (opts.lunch) parts.push("・昼食");
+        if (opts.dinner) parts.push("・夕食");
+  
         if (opts.car.schoolCar.enabled)
-          parts.push(`学校送迎(${opts.car.schoolCar.count}回)`);
+          parts.push(`・学校送迎(${opts.car.schoolCar.count}回)`);
         if (opts.car.homeCar.enabled)
-          parts.push(`自宅送迎(${opts.car.homeCar.count}回)`);
+          parts.push(`・自宅送迎(${opts.car.homeCar.count}回)`);
         if (opts.car.lessonCar.enabled) {
           const name = opts.car.lessonCar.name || "習い事";
-          parts.push(`${name}送迎(${opts.car.lessonCar.count}回)`);
+          parts.push(`・${name}送迎(${opts.car.lessonCar.count}回)`);
         }
-
+  
         return {
           id: res.id,
           title: `${res.type === "basic" ? "基本" : "スポット"}利用<br />${parts.join("<br />")}`,
           start: res.date,
           allDay: true,
+          color: res.type === "basic" ? "#3B82F6" : "#10B981", // ✅ ここで色分け
+          textColor: "white",
         };
       });
-
+  
       setEvents(mapped);
       setLoadingCalendar(false);
-    }, 300); // わずかに待つことで UX 向上
-
+    }, 300);
+  
     return () => clearTimeout(timer);
   }, [selectedChild]);
+  
 
   return (
     <div className="p-4">

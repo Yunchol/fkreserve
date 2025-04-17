@@ -45,7 +45,7 @@ export default function Step1({
         <div className="flex items-center gap-2 mb-1">
           <label className="font-medium">週の利用回数</label>
           {weeklyUsage === 0 && (
-            <span className="text-blue-500 animate-bounce">⬅ こちらを選択！</span>
+            <span className="text-blue-500 animate-bounce">⬇︎ こちらを選択！</span>
           )}
         </div>
         <select
@@ -75,7 +75,7 @@ export default function Step1({
             利用曜日（{selectedCount}/{weeklyUsage}）
           </label>
           {weeklyUsage > 0 && selectedCount === 0 && (
-            <span className="text-blue-500 animate-bounce">⬅ 曜日を選ぶ！</span>
+            <span className="text-blue-500 animate-bounce">⬇︎ 曜日を選ぶ！</span>
           )}
         </div>
         <div className="flex gap-2 flex-wrap">
