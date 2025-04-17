@@ -61,8 +61,7 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
 
         <div className="space-y-4">
           {/* プロフィール画像 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">プロフィール画像</label>
+          <div className="flex justify-center">
             <AvatarUploader
               userId={user.id}
               imageUrl={formData.imageUrl ?? ""}

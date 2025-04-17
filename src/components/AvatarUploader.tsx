@@ -74,38 +74,47 @@ export default function AvatarUploader({
   };
 
   return (
-    <div className="space-y-2">
-      {imageUrl ? (
-        <div className="relative w-24 h-24 mb-2">
-          <img
-            src={imageUrl}
-            alt="プロフィール画像"
-            className="w-24 h-24 object-cover rounded-full border"
-          />
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="absolute -top-2 -right-2 bg-white border border-gray-300 rounded-full p-1 hover:bg-red-100"
-          >
-            <X className="w-4 h-4 text-red-600" />
-          </button>
-        </div>
-      ) : (
-        <p className="text-xs text-gray-500 mb-2">画像が未設定です</p>
-      )}
-
-      <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-blue-600 hover:underline">
-        画像を選択
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          disabled={uploading}
-          className="hidden"
+    <div className="flex flex-col items-center space-y-2">
+  <div className="relative w-24 h-24 mb-1">
+    {imageUrl ? (
+      <>
+        <img
+          src={imageUrl}
+          alt="プロフィール画像"
+          className="w-24 h-24 object-cover rounded-full border"
         />
-      </label>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="absolute -top-2 -right-2 bg-white border border-gray-300 rounded-full p-1 hover:bg-red-100"
+        >
+          <X className="w-4 h-4 text-red-600" />
+        </button>
+      </>
+    ) : (
+      <div className="w-24 h-24 rounded-full border bg-gray-100" />
+    )}
+  </div>
 
-      {uploading && <p className="text-xs text-gray-500">アップロード中...</p>}
-    </div>
+  {/* {!imageUrl && (
+    <p className="text-xs text-gray-500 -mt-1">プロフィール画像が未設定です</p>
+  )} */}
+
+  <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-blue-600 hover:underline">
+    画像を選択
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleImageChange}
+      disabled={uploading}
+      className="hidden"
+    />
+  </label>
+
+  {uploading && <p className="text-xs text-gray-500">アップロード中...</p>}
+</div>
+
+
   );
+  
 }
