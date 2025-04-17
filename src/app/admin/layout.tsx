@@ -12,6 +12,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user } = useUserStore();
   const router = useRouter();
 
+  // ✅ ロールを日本語に変換するためのマップ
+  const roleLabels: Record<string, string> = {
+    admin: "管理者"
+    // parent: "保護者",
+    // staff: "スタッフ",
+    // pending: "承認待ち",
+  };
+
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
       router.push("/login");
@@ -31,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b px-6 py-3 flex items-center justify-between">
         {/* 左側：ロゴ or ユーザー情報 */}
         <div className="text-default text-gray-700">
-          ようこそ、<span className="font-semibold">{user.name}</span> さん（{user.role}）
+          ようこそ、<span className="font-semibold">{user.name}</span> さん（{roleLabels[user.role] ?? user.role}）
         </div>
 
         {/* 右側：ナビゲーションボタン */}
