@@ -135,16 +135,20 @@ export default function UserManagementPage() {
                   <Card key={u.id} className="h-full shadow-sm border">
                     <CardHeader className="flex justify-between items-start pb-2">
                       <div>
-                        <CardTitle className="text-base font-semibold flex items-center gap-2">
-                          {u.imageUrl && (
-                            <img
-                              src={u.imageUrl}
-                              alt="プロフィール"
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          )}
-                          {u.name}
-                        </CardTitle>
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        {u.imageUrl ? (
+                          <img
+                            src={u.imageUrl}
+                            alt="プロフィール"
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600">
+                            {u.name[0]}
+                          </div>
+                        )}
+                        {u.name}
+                      </CardTitle>
                         <p className="text-xs text-gray-500">{u.email}</p>
                       </div>
                       <div className="flex gap-1">
@@ -163,7 +167,6 @@ export default function UserManagementPage() {
                     </CardHeader>
                     <CardContent className="text-sm space-y-1 pt-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600">ロール：</span>
                         <span className={`text-xs px-2 py-0.5 rounded ${getRoleStyle(u.role)}`}>
                           {u.role}
                         </span>

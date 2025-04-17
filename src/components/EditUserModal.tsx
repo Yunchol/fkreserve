@@ -107,10 +107,10 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
               onChange={handleChange}
               className="border w-full rounded px-3 py-2 text-sm"
             >
-              <option value="pending">⏳ pending</option>
-              <option value="admin">👑 admin</option>
-              <option value="staff">🧑‍🏫 staff</option>
-              <option value="parent">👪 parent</option>
+              <option value="pending">⏳ 承認待ち</option>
+              <option value="admin">👑 管理者</option>
+              <option value="staff">🧑‍🏫 スタッフ</option>
+              <option value="parent">👪 保護者</option>
             </select>
           </div>
         </div>
