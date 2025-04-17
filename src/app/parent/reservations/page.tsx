@@ -106,20 +106,24 @@ export default function ReservationPage() {
       </div>
 
 
-        <div className="flex gap-2">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-            onClick={() => router.push("/parent/reservations/new")}
-          >
-            新規予約を作成
-          </button>
-          <button
-            className="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200 border border-blue-300 text-sm"
-            onClick={() => router.push("/parent/reservations/edit")}
-          >
-            予約を編集
-          </button>
-        </div>
+      <div className="flex gap-2">
+        {/* 新規予約ボタン */}
+        <button
+          className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md transition duration-150 text-sm"
+          onClick={() => router.push("/parent/reservations/new")}
+        >
+          ＋ 新規予約
+        </button>
+
+        {/* 編集ボタン */}
+        <button
+          className="bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 px-4 py-2 rounded-md transition duration-150 text-sm"
+          onClick={() => router.push("/parent/reservations/edit")}
+        >
+          ✎ 予約を編集
+        </button>
+      </div>
+
       </div>
 
       <h1 className="text-lg font-semibold mb-4">予約状況カレンダー</h1>
