@@ -27,6 +27,8 @@ export default function ParentBillingDetailPage(props: {
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [childName, setChildName] = useState("―");
+
 
   useEffect(() => {
     if (!month || !childId) return;
@@ -43,6 +45,7 @@ export default function ParentBillingDetailPage(props: {
 
       const data = await res.json();
       setInvoice(data.invoice);
+      setChildName(data.childName);
       setLoading(false);
     };
 
@@ -64,7 +67,7 @@ export default function ParentBillingDetailPage(props: {
       <InvoicePreview
         invoiceId={invoice.id}
         childId={childId}
-        childName="―"
+        childName={childName}
         month={invoice.month}
         breakdown={invoice.breakdown}
         weeklyCount={invoice.weeklyCount}

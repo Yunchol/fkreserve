@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useChildStore } from "@/stores/childStore";
 import ChildSelector from "@/components/ChildSelector";
-import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
@@ -27,9 +26,7 @@ export default function ParentBillingPage() {
   const [loadingChildren, setLoadingChildren] = useState(true);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedMonth = searchParams.get("month");
+  
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
