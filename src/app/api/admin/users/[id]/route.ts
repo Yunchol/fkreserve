@@ -5,8 +5,9 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(_: Request, context: { params: { id: string } }) {
-  const { id } = await context.params;
+// Next.js 15では、context.params が Promise になった！
+export async function DELETE(_: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params; // ← await が必要
 
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });
@@ -18,8 +19,7 @@ export async function DELETE(_: Request, context: { params: { id: string } }) {
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
 
-  await prisma.user.delete({ where: { id: childId } });
-
+  await prisma.user.delete({ where: { id } });
   return NextResponse.json({ message: "削除完了" });
 }
 
