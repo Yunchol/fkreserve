@@ -4,6 +4,7 @@ import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { convertArrayToOptions, convertOptionsToArray } from "@/lib/utils/convertOption"; 
 import { summarizeOptions } from "@/lib/utils/summarizeOptions"; 
+import { v4 as uuidv4 } from "uuid";
 
 // GET: 予約一覧取得（親の子どもと予約すべて）
 export async function GET() {
@@ -55,18 +56,7 @@ export async function POST(req: Request) {
     if (!payload) return NextResponse.json({ error: "認証エラー" }, { status: 401 });
 
     const userId = payload.userId;
-
-    const body: {
-      childId: string;
-      date?: string;
-      type?: string;
-      options?: any;
-      reservations?: any[];
-      basicUsage?: any;
-      month?: string;
-      optionSummary?: Record<string, Record<string, number>>;
-    } = await req.json();
-
+    const body = await req.json();
     const {
       childId,
       date,
@@ -78,13 +68,12 @@ export async function POST(req: Request) {
       optionSummary,
     } = body;
 
-    // ✅ 子どもの所有者チェック
     const child = await prisma.child.findUnique({ where: { id: childId } });
     if (!child || child.parentId !== userId) {
       return NextResponse.json({ error: "不正な子どもID" }, { status: 403 });
     }
 
-    // ✅ 一括登録の場合（新規予約作成画面から）
+    // ✅ 一括登録処理
     if (Array.isArray(reservations)) {
       if (!month || !basicUsage) {
         return NextResponse.json({ error: "月情報または利用プランが不足しています" }, { status: 400 });
@@ -92,7 +81,7 @@ export async function POST(req: Request) {
 
       const ops: any[] = [];
 
-      // ① 既存の予約を削除（来月分）
+      // ① 既存の予約削除
       ops.push(
         prisma.reservation.deleteMany({
           where: {
@@ -105,7 +94,7 @@ export async function POST(req: Request) {
         })
       );
 
-      // ② BasicUsage を upsert（利用プラン）
+      // ② BasicUsage の upsert
       ops.push(
         prisma.basicUsage.upsert({
           where: {
@@ -124,30 +113,37 @@ export async function POST(req: Request) {
         })
       );
 
-      // ③ 予約データをすべて登録
-      for (const r of reservations) {
-        ops.push(
-          prisma.reservation.create({
-            data: {
-              childId,
-              date: new Date(r.date),
-              type: r.type,
-              options: {
-                create: r.options.map((opt: any) => ({
-                  type: opt.type,
-                  count: opt.count,
-                  time: opt.time || null,
-                  lessonName: opt.lessonName || null,
-                })),
-              },
-            },
-          })
-        );
+      // ③ 予約用UUID作成とバルクデータ作成
+      const reservationData = reservations.map((r) => ({
+        id: uuidv4(),
+        childId,
+        date: new Date(r.date),
+        type: r.type,
+      }));
+
+      ops.push(prisma.reservation.createMany({ data: reservationData }));
+
+      // ④ オプションも一括作成
+      const optionData = reservations.flatMap((r, idx) => {
+        const reservationId = reservationData[idx].id;
+        return r.options.map((opt: any) => ({
+          reservationId,
+          type: opt.type,
+          count: opt.count,
+          time: opt.time || null,
+          lessonName: opt.lessonName || null,
+        }));
+      });
+
+      if (optionData.length > 0) {
+        ops.push(prisma.option.createMany({ data: optionData }));
       }
 
-      // ④ 月次オプション利用集計（MonthlyOptionUsage）も追加
+      // ⑤ 月次集計（月ごと）
       if (optionSummary && typeof optionSummary === "object") {
-        for (const [monthKey, options] of Object.entries(optionSummary)) {
+        const summary = optionSummary as Record<string, Record<string, number>>;
+      
+        for (const [monthKey, options] of Object.entries(summary)) {
           for (const [optionType, count] of Object.entries(options)) {
             ops.push(
               prisma.monthlyOptionUsage.upsert({
@@ -170,14 +166,15 @@ export async function POST(req: Request) {
           }
         }
       }
+      
 
-      // ✅ トランザクション実行（全部成功すれば反映、失敗ならロールバック）
+      // ✅ 実行
       await prisma.$transaction(ops);
 
       return NextResponse.json({ success: true });
     }
 
-    // ✅ 単体登録（個別予約）
+    // ✅ 単体登録（元のまま）
     if (!date || !type || !Array.isArray(options)) {
       return NextResponse.json({ error: "パラメータ不足" }, { status: 400 });
     }
@@ -212,6 +209,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "サーバーエラー" }, { status: 500 });
   }
 }
+
 
 
 
