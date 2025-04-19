@@ -19,16 +19,21 @@ const Step2 = ({
     const value = parseInt(e.target.value, 10);
     setSpotDays(value);
 
-    // 選択済み日数が超えてたらカット
     if (spotSelectedDates.length > value) {
       setSpotSelectedDates(spotSelectedDates.slice(0, value));
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* スポット利用回数の選択 */}
       <div>
-        <label className="block font-medium mb-1">スポット利用回数を選択</label>
+        <div className="flex items-center gap-2 mb-1">
+          <label className="font-medium">スポット利用回数を選択</label>
+          {spotDays === 0 && (
+            <span className="text-blue-500 animate-bounce">⬇︎ こちらから選択！</span>
+          )}
+        </div>
         <select
           value={spotDays}
           onChange={handleChange}
@@ -43,6 +48,14 @@ const Step2 = ({
         </select>
       </div>
 
+      {/* スポット日選択の誘導 */}
+      {spotDays > 0 && spotSelectedDates.length === 0 && (
+        <p className="text-blue-500 animate-bounce text-sm">
+          カレンダーの日付を {spotDays} 日分クリックしてください！➡︎
+        </p>
+      )}
+
+      {/* 選択された日リスト */}
       {spotSelectedDates.length > 0 && (
         <div>
           <p className="font-medium mb-1">選択中のスポット日：</p>

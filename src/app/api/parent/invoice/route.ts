@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 
   const child = await prisma.child.findUnique({
     where: { id: childId },
-    select: { parentId: true },
+    select: { parentId: true, name: true }, // ← `name` を取得
   });
 
   if (!child || child.parentId !== userId) {
@@ -38,5 +38,8 @@ export async function GET(req: Request) {
     },
   });
 
-  return NextResponse.json({ invoice });
+  return NextResponse.json({
+    invoice,
+    childName: child.name, // ← ここで一緒に返す！
+  });
 }

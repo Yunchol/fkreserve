@@ -5,9 +5,8 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
-// ✅ ユーザー削除
-export async function DELETE(req: NextRequest, context: any) {
-  const childId = context.params.id;
+export async function DELETE(_: Request, context: { params: { id: string } }) {
+  const { id } = await context.params;
 
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "未ログイン" }, { status: 401 });

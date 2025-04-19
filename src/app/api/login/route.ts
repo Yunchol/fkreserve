@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { generateToken } from "@/lib/auth";
 
+
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 

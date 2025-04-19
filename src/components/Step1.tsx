@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ArrowDown } from "lucide-react"; // ← アイコン使う場合
 
 type Props = {
   weeklyUsage: number;
@@ -22,33 +23,31 @@ export default function Step1({
       const currentCount = Object.values(prev).filter(Boolean).length;
       const isSelected = prev[day] ?? false;
 
-      // すでに選択済 → OFF にする
       if (isSelected) {
-        return {
-          ...prev,
-          [day]: false,
-        };
+        return { ...prev, [day]: false };
       }
 
-      // 未選択だが上限に達してる → 拒否
       if (currentCount >= weeklyUsage) {
         alert(`週${weeklyUsage}回なので${weeklyUsage}つまで選択できます`);
         return prev;
       }
 
-      // 未選択かつ上限未満 → ON にする
-      return {
-        ...prev,
-        [day]: true,
-      };
+      return { ...prev, [day]: true };
     });
   };
 
+  const selectedCount = Object.values(selectedDays).filter(Boolean).length;
+
   return (
-    <div className="space-y-4">
-      {/* 利用回数の選択 */}
+    <div className="space-y-6">
+      {/* 週の利用回数の選択 */}
       <div>
-        <label className="block font-medium mb-1">週の利用回数</label>
+        <div className="flex items-center gap-2 mb-1">
+          <label className="font-medium">週の利用回数</label>
+          {weeklyUsage === 0 && (
+            <span className="text-blue-500 animate-bounce">⬇︎ こちらを選択！</span>
+          )}
+        </div>
         <select
           value={weeklyUsage}
           onChange={(e) => {
@@ -72,16 +71,23 @@ export default function Step1({
 
       {/* 曜日の選択 */}
       <div>
-        <label className="block font-medium mb-1">
-          利用曜日（{Object.values(selectedDays).filter((v) => v).length}/{weeklyUsage}）
-        </label>
+        <div className="flex items-center gap-2 mb-1">
+          <label className="font-medium">
+            利用曜日（{selectedCount}/{weeklyUsage}）
+          </label>
+          {weeklyUsage > 0 && selectedCount === 0 && (
+            <span className="text-blue-500 animate-bounce">⬇︎ 曜日を選ぶ！</span>
+          )}
+        </div>
         <div className="flex gap-2 flex-wrap">
           {DAYS.map((day) => (
             <button
               key={day}
               onClick={() => handleDayToggle(day)}
-              className={`px-4 py-2 rounded border ${
-                selectedDays[day] ? "bg-blue-600 text-white" : "bg-white"
+              className={`px-4 py-2 rounded border transition ${
+                selectedDays[day]
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white hover:bg-gray-100"
               }`}
             >
               {day}

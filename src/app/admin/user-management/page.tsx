@@ -1,15 +1,13 @@
 'use client';
 
-
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import EditUserModal from "@/components/EditUserModal";
 import { Button } from "@/components/ui/button";
 import { User } from "@/types/user";
+import { Loader2 } from "lucide-react"; // 👈 スピナー用アイコン
 
-// ロール表示に応じたスタイル
 const getRoleStyle = (role: string) => {
   switch (role) {
     case "admin":
@@ -101,19 +99,24 @@ export default function UserManagementPage() {
   }, {} as { [key: string]: User[] });
 
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-6">
+    <div className="p-4 max-w-6xl mx-auto space-y-6 relative">
       <h1 className="text-2xl font-bold">ユーザー管理</h1>
 
-      {loading ? (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full" />
-          ))}
+      {/* ✅ ローディング中のスピナー */}
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="flex flex-col items-center gap-2 text-gray-600">
+            <Loader2 className="animate-spin w-6 h-6" />
+            <p className="text-sm">読み込み中...</p>
+          </div>
         </div>
-      ) : (
+      )}
+
+
+      {/* ✅ データ取得後のユーザー一覧表示 */}
+      {!loading &&
         Object.entries(roleLabels).map(([role, label]) => (
           <div key={role}>
-            {/* 見出し + トグル */}
             <div className="flex items-center gap-2 mb-2">
               <h2 className="text-lg font-semibold">
                 {label}（{groupedUsers[role]?.length ?? 0}人）
@@ -126,31 +129,30 @@ export default function UserManagementPage() {
               </button>
             </div>
 
-            {/* カード表示 */}
             {expandedRoles[role] && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(groupedUsers[role] ?? []).map((u) => (
                   <Card key={u.id} className="h-full shadow-sm border">
                     <CardHeader className="flex justify-between items-start pb-2">
                       <div>
-                        <CardTitle className="text-base font-semibold flex items-center gap-2">
-                          {u.imageUrl && (
-                            <img
-                              src={u.imageUrl}
-                              alt="プロフィール"
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          )}
-                          {u.name}
-                        </CardTitle>
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        {u.imageUrl ? (
+                          <img
+                            src={u.imageUrl}
+                            alt="プロフィール"
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600">
+                            {u.name[0]}
+                          </div>
+                        )}
+                        {u.name}
+                      </CardTitle>
                         <p className="text-xs text-gray-500">{u.email}</p>
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditModal(u)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => openEditModal(u)}>
                           編集
                         </Button>
                         <Button
@@ -163,10 +165,8 @@ export default function UserManagementPage() {
                         </Button>
                       </div>
                     </CardHeader>
-
                     <CardContent className="text-sm space-y-1 pt-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600">ロール：</span>
                         <span className={`text-xs px-2 py-0.5 rounded ${getRoleStyle(u.role)}`}>
                           {u.role}
                         </span>
@@ -180,8 +180,7 @@ export default function UserManagementPage() {
               </div>
             )}
           </div>
-        ))
-      )}
+        ))}
 
       {/* 編集モーダル */}
       {selectedUser && (

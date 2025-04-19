@@ -48,6 +48,7 @@ export default function SignupPage() {
 
     if (res.ok) {
       router.push("/login");
+      alert("新規登録に成功しました。管理者の承認をお待ちください。")
     } else {
       const data = await res.json();
       setError(data.error || "登録に失敗しました");
@@ -61,24 +62,34 @@ export default function SignupPage() {
           <CardTitle className="text-center text-2xl">新規登録</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          
           <Input
             placeholder="名前"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <Input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Input
-            type="password"
-            placeholder="パスワード（6文字以上）"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+         <Input
+          type="email"
+          placeholder="メールアドレス"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={error && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? "border-red-500" : ""}
+        />
+        {error && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+          <p className="text-red-600 text-sm">正しいメールアドレスを入力してください</p>
+        )}
+
+        <Input
+          type="password"
+          placeholder="パスワード（6文字以上）"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className={error && password.length < 6 ? "border-red-500" : ""}
+        />
+        {error && password.length < 6 && (
+          <p className="text-red-600 text-sm">パスワードは6文字以上で入力してください</p>
+        )}
+
 
           <Button
             disabled={loading}
@@ -93,9 +104,12 @@ export default function SignupPage() {
 
           <div className="text-center mt-4 text-sm text-gray-600">
             すでにアカウントをお持ちの方は{" "}
-            <Link href="/login" className="text-blue-600 hover:underline">
+            <button
+              onClick={() => router.push("/login")}
+              className="text-blue-600 hover:underline"
+            >
               ログインはこちら
-            </Link>
+            </button>
           </div>
         </CardContent>
       </Card>
