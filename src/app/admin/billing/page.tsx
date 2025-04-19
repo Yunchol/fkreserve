@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import DatePicker from "react-datepicker"; // ← カレンダーコンポーネント
+import { ja } from "date-fns/locale"; // ← 日本語ロケール対応
+import "react-datepicker/dist/react-datepicker.css"; // ← カレンダーCSS
+import { Calendar } from "lucide-react";
+
+
 
 type BillingEntry = {
   id: string;
@@ -21,8 +27,16 @@ export default function BillingPage() {
   const [billingList, setBillingList] = useState<BillingEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const isSearchDisabled = !selectedMonth && !searchName;
+
+  useEffect(() => {
+    if (selectedDate) {
+      const formatted = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}`;
+      setSelectedMonth(formatted); // 既存の検索ロジックでそのまま使えるように
+    }
+  }, [selectedDate]);
+  
 
   const handleSearch = async () => {
     if (isSearchDisabled) return;
@@ -67,12 +81,21 @@ export default function BillingPage() {
       <div className="flex flex-wrap gap-4 items-end">
         <div className="flex flex-col">
           <label className="text-sm font-medium mb-1">請求対象の月</label>
-          <Input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-48"
-          />
+          <div className="relative w-48">
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              dateFormat="yyyy-MM"
+              showMonthYearPicker
+              locale={ja}
+              className="w-full border border-gray-300 rounded px-3 py-2 pr-10 text-sm"
+              calendarClassName="custom-datepicker"
+              placeholderText="年月を選択"
+            />
+            <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+              <Calendar className="w-4 h-4 text-gray-500" />
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col">
