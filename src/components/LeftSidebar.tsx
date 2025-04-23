@@ -28,7 +28,7 @@ export default function LeftSidebar() {
           <div>
             <div className="flex items-center gap-2 font-bold text-lg text-gray-800">
               <Settings2 className="w-4 h-4" />
-              ② オプション追加・削除
+              ② オプション追加/予約削除
             </div>
             <p className="ml-6 mt-1 text-gray-600">
               ➡︎ イベント（
