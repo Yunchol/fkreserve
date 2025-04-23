@@ -13,27 +13,33 @@ export default function LeftSidebar() {
 
         <div className="space-y-4 text-sm text-gray-700">
           <div>
-          <div className="flex items-center gap-2 font-bold text-blue-600">
+            <div className="flex items-center gap-2 font-bold text-lg text-gray-800">
               <Move className="w-4 h-4" />
               ① 振替
             </div>
             <p className="ml-6 mt-1 text-gray-600">
-              ➡︎ イベント（青/緑）を持ち上げて移動
+              ➡︎ イベント（
+              <span className="text-blue-600 font-semibold">青</span>／
+              <span className="text-green-600 font-semibold">緑</span>
+              ）を持ち上げて移動
             </p>
           </div>
 
           <div>
-            <div className="flex items-center gap-2 font-bold text-green-600">
+            <div className="flex items-center gap-2 font-bold text-lg text-gray-800">
               <Settings2 className="w-4 h-4" />
               ② オプション追加・削除
             </div>
             <p className="ml-6 mt-1 text-gray-600">
-              ➡︎ イベント（青/緑）をクリックして操作
+              ➡︎ イベント（
+              <span className="text-blue-600 font-semibold">青</span>／
+              <span className="text-green-600 font-semibold">緑</span>
+              ）をクリックして操作
             </p>
           </div>
 
           <div>
-            <div className="flex items-center gap-2 font-bold text-purple-600">
+            <div className="flex items-center gap-2 font-bold text-lg text-gray-800">
               <PlusCircle className="w-4 h-4" />
               ③ スポット追加
             </div>
@@ -46,10 +52,12 @@ export default function LeftSidebar() {
 
       <button
         onClick={() => router.push("/parent/reservations")}
-        className="w-full px-4 py-2 text-sm font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-      >
+        className="w-full px-4 py-2 text-sm font-semibold rounded bg-gray-700 text-white hover:bg-gray-900 transition"
+        >
         更新を完了する
-      </button>
+        </button>
+
+
     </div>
   );
 }
