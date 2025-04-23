@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { User } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import AvatarUploader from "@/components/AvatarUploader";
+import { Loader2 } from "lucide-react";
 
 // Supabaseクライアント
 const supabase = createClient(
@@ -24,6 +25,7 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
     ...user,
     imageUrl: user.imageUrl ?? "",
   });
+  const [isSaving, setIsSaving] = useState(false); // 🔄 保存中ローディング状態
 
   useEffect(() => {
     setFormData({
@@ -38,17 +40,26 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
   };
 
   const handleSubmit = async () => {
-    const res = await fetch(`/api/admin/users/${user.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
+    setIsSaving(true); // 🔄 開始
 
-    if (res.ok) {
-      onSave();
-      onClose();
-    } else {
-      alert("更新に失敗しました");
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        onSave();
+        onClose();
+      } else {
+        alert("更新に失敗しました");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("通信エラーが発生しました");
+    } finally {
+      setIsSaving(false); // ✅ 終了
     }
   };
 
@@ -115,9 +126,21 @@ export default function EditUserModal({ user, isOpen, onClose, onSave }: Props) 
           </div>
         </div>
 
+        {/* ボタン群 */}
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={onClose}>キャンセル</Button>
-          <Button onClick={handleSubmit}>保存</Button>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            キャンセル
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                保存中...
+              </span>
+            ) : (
+              "保存"
+            )}
+          </Button>
         </div>
       </div>
     </div>
