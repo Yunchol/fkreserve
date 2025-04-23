@@ -10,12 +10,37 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // ✅ ローディング状態
+  const [emailError, setEmailError] = useState(""); // ✅ エラー文言
+  const [passwordError, setPasswordError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const setUser = useUserStore((state) => state.setUser);
 
+  const validate = () => {
+    let valid = true;
+    setEmailError("");
+    setPasswordError("");
+
+    if (!email) {
+      setEmailError("メールアドレスを入力してください");
+      valid = false;
+    } else if (!/^[\w.+-]+@[a-z\d.-]+\.[a-z]{2,}$/i.test(email)) {
+      setEmailError("メールアドレスの形式が正しくありません");
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError("パスワードを入力してください");
+      valid = false;
+    }
+
+    return valid;
+  };
+
   const handleLogin = async () => {
-    setIsLoading(true); // ✅ ローディング開始
+    if (!validate()) return;
+
+    setIsLoading(true);
     try {
       const res = await fetch("/api/login", {
         method: "POST",
@@ -44,11 +69,7 @@ export default function LoginPage() {
       } else if (user.role === "staff") {
         router.push("/staff/staff-dashboard");
       } else if (user.role === "parent") {
-        if (!user.profileCompleted) {
-          router.push("/parent/setup");
-        } else {
-          router.push("/parent/parent-dashboard");
-        }
+        router.push(user.profileCompleted ? "/parent/parent-dashboard" : "/parent/setup");
       } else {
         router.push("/pending");
       }
@@ -56,7 +77,7 @@ export default function LoginPage() {
       alert("エラーが発生しました");
       console.error(error);
     } finally {
-      setIsLoading(false); // ✅ ローディング終了
+      setIsLoading(false);
     }
   };
 
@@ -67,18 +88,26 @@ export default function LoginPage() {
           <CardTitle className="text-center text-2xl">ログイン</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Input
-            type="password"
-            placeholder="パスワード"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div>
+            <Input
+              type="email"
+              placeholder="メールアドレス"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+          </div>
+
+          <div>
+            <Input
+              type="password"
+              placeholder="パスワード"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
+          </div>
+
           <Button className="w-full" onClick={handleLogin} disabled={isLoading}>
             {isLoading ? "ログイン中..." : "ログイン"}
           </Button>
@@ -94,3 +123,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
