@@ -7,6 +7,7 @@ import ChildSelector from "@/components/ChildSelector";
 import { postReservation } from "@/lib/api/reservation";
 import ReservationModal from "@/components/ReservationModal";
 import { DateClickArg } from "@fullcalendar/interaction";
+import LeftSidebar from "@/components/LeftSidebar";
 import { Reservation, ReservationOption } from "@/types/reservation"; // 型をインポート
 import { format } from "date-fns";
 
@@ -181,23 +182,33 @@ const isDisabledDate = (dateStr: string) => !dateStr.startsWith(nextMonthStr);
     <div className="p-4">
       <ChildSelector children={children} />
       <h1 className="text-xl font-semibold mb-4">予約カレンダー（編集）</h1>
+  
       {selectedChild ? (
-        <ReservationCalendar
-        reservations={selectedChild.reservations}
-        editable
-        allowClick
-        allowEventClick
-        mode="edit"
-        onDateClick={handleDateClick}
-        onReservationMove={handleReservationMove}
-        onEventClick={handleEventClick}
-        disabledDateFn={isDisabledDate} // ← 追加
-      />
-      
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
+          {/* 左カラム（仮のステップや設定エリア） */}
+          <div className="md:col-span-3 space-y-4">
+            <LeftSidebar />
+          </div>
+
+          {/* 右カラム（予約カレンダー） */}
+          <div className="md:col-span-9">
+            <ReservationCalendar
+              reservations={selectedChild.reservations}
+              editable
+              allowClick
+              allowEventClick
+              mode="edit"
+              onDateClick={handleDateClick}
+              onReservationMove={handleReservationMove}
+              onEventClick={handleEventClick}
+              disabledDateFn={isDisabledDate}
+            />
+          </div>
+        </div>
       ) : (
         <p>子どもを選択してください</p>
       )}
-
+  
       {showModal && (selectedDate || editingReservation) && (
         <ReservationModal
           date={selectedDate ?? editingReservation?.date ?? ""}
@@ -219,13 +230,13 @@ const isDisabledDate = (dateStr: string) => !dateStr.startsWith(nextMonthStr);
                   : child
               )
             );
-
+  
             await fetch("/api/parent/reservations", {
               method: "DELETE",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ reservationId }),
             });
-
+  
             setShowModal(false);
             setEditingReservation(null);
           }}
@@ -233,4 +244,5 @@ const isDisabledDate = (dateStr: string) => !dateStr.startsWith(nextMonthStr);
       )}
     </div>
   );
+  
 }
