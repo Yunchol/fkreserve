@@ -182,9 +182,13 @@ export default function ParentSetupPage() {
           </Card>
         ))}
 
-        <Button variant="secondary" onClick={handleAddChild}>
+        <Button
+          onClick={handleAddChild}
+          className="border bg-gray-50 text-gray-800 hover:border-gray-400 hover:bg-gray-50 text-gray-800 transition"
+        >
           ＋ 新しい子どもの入力欄を追加
         </Button>
+
       </div>
 
       <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
