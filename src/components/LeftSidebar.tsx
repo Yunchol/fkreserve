@@ -1,10 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Move, PlusCircle, Settings2 } from "lucide-react";
+import { Move, PlusCircle, Settings2, CheckCircle2, XCircle, CheckCircle } from "lucide-react";
 
-export default function LeftSidebar() {
-  const router = useRouter();
+type Props = {
+  onConfirm: () => void;
+  onCancel: () => void;
+};
+
+export default function LeftSidebar({ onConfirm, onCancel }: Props) {
 
   return (
     <div className="space-y-6">
@@ -50,14 +53,24 @@ export default function LeftSidebar() {
         </div>
       </div>
 
-      <button
-        onClick={() => router.push("/parent/reservations")}
-        className="w-full px-4 py-2 text-sm font-semibold rounded bg-gray-700 text-white hover:bg-gray-900 transition"
+      {/* ✅ ボタンセクション（シンプル＆均等） */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onConfirm}
+          className="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md"
         >
-        更新を完了する
+          <CheckCircle2 className="w-4 h-4" />
+          保存
         </button>
 
-
+        <button
+          onClick={onCancel}
+          className="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+        >
+          <XCircle className="w-4 h-4" />
+          取消
+        </button>
+      </div>
     </div>
   );
 }
