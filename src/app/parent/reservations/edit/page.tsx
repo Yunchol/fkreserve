@@ -26,6 +26,7 @@ export default function CalendarEditPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const startOfNextMonth = new Date();
   startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
@@ -147,6 +148,8 @@ export default function CalendarEditPage() {
   };
 
   const handleConfirm = async () => {
+    setIsLoading(true);
+
     const current = children.find(c => c.id === selectedChildId);
     const edited = editedChildren.find(c => c.id === selectedChildId);
     if (!current || !edited) return;
@@ -175,6 +178,8 @@ export default function CalendarEditPage() {
 
     } catch (e) {
       alert("保存に失敗しました");
+    } finally{
+      setIsLoading(false);
     }
   };
   
@@ -193,7 +198,7 @@ export default function CalendarEditPage() {
       {selectedChild ? (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
           <div className="md:col-span-3 space-y-4">
-          <LeftSidebar onConfirm={handleConfirm} onCancel={handleCancel} />
+          <LeftSidebar onConfirm={handleConfirm} onCancel={handleCancel} isLoading={isLoading} />
           </div>
 
           <div className="md:col-span-9">
