@@ -1,10 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Move, PlusCircle, Settings2 } from "lucide-react";
+import { Move, PlusCircle, Settings2, CheckCircle2, XCircle, CheckCircle, Loader2 } from "lucide-react";
 
-export default function LeftSidebar() {
-  const router = useRouter();
+type Props = {
+  onConfirm: () => void;
+  onCancel: () => void;
+  isLoading: boolean;
+};
+
+export default function LeftSidebar({ onConfirm, onCancel, isLoading }: Props) {
 
   return (
     <div className="space-y-6">
@@ -50,14 +54,38 @@ export default function LeftSidebar() {
         </div>
       </div>
 
-      <button
-        onClick={() => router.push("/parent/reservations")}
-        className="w-full px-4 py-2 text-sm font-semibold rounded bg-gray-700 text-white hover:bg-gray-900 transition"
+      {/* ✅ ボタンセクション（シンプル＆均等） */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onConfirm}
+          disabled={isLoading}
+          className={`flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition
+            ${isLoading
+              ? "bg-blue-400 text-white cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"}`}
         >
-        更新を完了する
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              送信中...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              保存
+            </>
+          )}
         </button>
 
-
+        <button
+          onClick={onCancel}
+          disabled={isLoading}
+          className="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition"
+        >
+          <XCircle className="w-4 h-4" />
+          取消
+        </button>
+      </div>
     </div>
   );
 }
