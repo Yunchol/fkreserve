@@ -75,13 +75,13 @@ export async function POST(req: Request) {
 
     // ✅ 一括登録処理
     if (Array.isArray(reservations)) {
-      if (!month || !basicUsage) {
-        return NextResponse.json({ error: "月情報または利用プランが不足しています" }, { status: 400 });
+      if (!month) {
+        return NextResponse.json({ error: "月情報が不足しています" }, { status: 400 });
       }
-
+    
       const ops: any[] = [];
-
-      // ① 既存の予約削除
+    
+      // ① 予約削除
       ops.push(
         prisma.reservation.deleteMany({
           where: {
@@ -93,25 +93,33 @@ export async function POST(req: Request) {
           },
         })
       );
+    
+     // ✅ basicUsageが正しく存在しているときのみ upsert
+      if (
+        basicUsage &&
+        typeof basicUsage.weeklyCount === "number" &&
+        Array.isArray(basicUsage.weekdays)
+      ) {
+        ops.push(
+          prisma.basicUsage.upsert({
+            where: {
+              childId_month: { childId, month },
+            },
+            update: {
+              weeklyCount: basicUsage.weeklyCount,
+              weekdays: basicUsage.weekdays,
+            },
+            create: {
+              childId,
+              month,
+              weeklyCount: basicUsage.weeklyCount,
+              weekdays: basicUsage.weekdays,
+            },
+          })
+        );
+      }
 
-      // ② BasicUsage の upsert
-      ops.push(
-        prisma.basicUsage.upsert({
-          where: {
-            childId_month: { childId, month },
-          },
-          update: {
-            weeklyCount: basicUsage.weeklyCount,
-            weekdays: basicUsage.weekdays,
-          },
-          create: {
-            childId,
-            month,
-            weeklyCount: basicUsage.weeklyCount,
-            weekdays: basicUsage.weekdays,
-          },
-        })
-      );
+
 
       // ③ 予約用UUID作成とバルクデータ作成
       const reservationData = reservations.map((r) => ({
