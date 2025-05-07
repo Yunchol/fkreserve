@@ -164,10 +164,7 @@ export default function CalendarEditPage() {
       await postReservations(
         selectedChildId!,
         reservations,
-        {
-          weeklyCount: 0,
-          weekdays: [],
-        },
+        null,
         nextMonthStr,
         {}
       );

@@ -61,7 +61,7 @@ export const postReservations = async (
   basicUsage: {
     weeklyCount: number;
     weekdays: string[];
-  },
+  } | null,
   month: string,
   optionSummary: Record<string, Record<string, number>> // ← これを追加
 ) => {
